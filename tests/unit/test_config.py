@@ -12,8 +12,18 @@ def test_load_default_config():
     assert config.embeddings.sparse_model == "prithivida/Splade_PP_en_v1"
     # Team dataset (config/companies.yaml); upstream list is kept in companies_original.yaml
     assert config.qdrant.collection_name == "team_docs"
-    assert {c.ticker for c in config.companies} == {"VFS", "LLY", "JPM"}
+    tickers = [c.ticker for c in config.companies]
+    assert len(tickers) == 13
+    assert {"NVDA", "AAPL", "TSM", "VFS", "LLY", "JPM"} <= set(tickers)
 
     vfs = next(c for c in config.companies if c.ticker == "VFS")
     assert vfs.cik == "0001913510"
     assert vfs.forms == ["20-F"]
+
+
+def test_env_overrides_companies_and_collection(monkeypatch):
+    monkeypatch.setenv("HYBRID_COMPANIES_FILE", "config/companies_new3.yaml")
+    monkeypatch.setenv("QDRANT_COLLECTION", "team_docs_part2")
+    config = load_config()
+    assert [c.ticker for c in config.companies] == ["VFS", "LLY", "JPM"]
+    assert config.qdrant.collection_name == "team_docs_part2"

@@ -87,7 +87,11 @@ def load_config(
         config_path = Path(config_path)
 
     if companies_path is None:
-        companies_path = root / "config" / "companies.yaml"
+        # Team: HYBRID_COMPANIES_FILE lets one person index a small subset without editing the shared file
+        env_companies = os.environ.get("HYBRID_COMPANIES_FILE")
+        companies_path = Path(env_companies) if env_companies else root / "config" / "companies.yaml"
+        if not companies_path.is_absolute():
+            companies_path = root / companies_path
     else:
         companies_path = Path(companies_path)
 
@@ -112,6 +116,8 @@ def load_config(
         config_data.setdefault("qdrant", {})["url"] = os.environ["QDRANT_URL"]
     if "QDRANT_API_KEY" in os.environ:
         config_data.setdefault("qdrant", {})["api_key"] = os.environ["QDRANT_API_KEY"]
+    if "QDRANT_COLLECTION" in os.environ:
+        config_data.setdefault("qdrant", {})["collection_name"] = os.environ["QDRANT_COLLECTION"]
     if "EDGAR_USER_AGENT" in os.environ:
         config_data.setdefault("edgar", {})["user_agent"] = os.environ["EDGAR_USER_AGENT"]
 

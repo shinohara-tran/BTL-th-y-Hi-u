@@ -3,7 +3,9 @@
 # BẢN NHÁP: các câu dưới đây được viết theo các chủ đề thường có trong báo cáo của
 # 3 công ty, CHƯA ai kiểm tra trong báo cáo thật. Trước khi chốt, mỗi câu phải có
 # ít nhất một đoạn trả lời được trong dữ liệu đã index; câu nào không có thì sửa hoặc xóa.
-# Mục tiêu: khoảng 100 câu (hiện có 24).
+# Mục tiêu: khoảng 100 câu (hiện có 24, toàn về 3 công ty mới).
+# Cần thêm câu về 10 công ty gốc; có thể lấy ý từ evaluation/golden_dataset.yaml của tác giả.
+# Với 13 công ty, câu kiểu "hỏi Microsoft ra Apple" dễ xảy ra hơn: nên có nhiều câu nhóm 'company'.
 #
 # Trường:
 #   id                mã câu, không trùng

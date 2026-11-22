@@ -10,7 +10,8 @@ Repo này là bản sao của `satyam671/financial-hybrid-search-qdrant` (commit
 | Web đọc `config/default.yaml` | `src/hybrid_search/api.py` | Bản gốc dùng `AppConfig()` mặc định. Phần 2 đổi model trong YAML thì web vẫn dùng model cũ |
 | Số chunk hiển thị là số thật | `src/hybrid_search/api.py` | Bản gốc ép tối thiểu 8.609 |
 | Danh sách công ty trên web lấy từ config | `src/hybrid_search/api.py` | Bản gốc viết cứng 10 mã |
-| Bộ dữ liệu mới: VinFast, Eli Lilly, JPMorgan | `config/companies.yaml` | Thầy muốn dữ liệu khác AAPL, NVDA. Danh sách gốc ở `companies_original.yaml` |
+| Mở rộng dữ liệu: 10 công ty gốc + VinFast, Eli Lilly, JPMorgan | `config/companies.yaml` | Giữ 10 công ty để so được với bài báo; thêm 3 ngành mới vì thầy muốn dữ liệu khác AAPL, NVDA |
+| Biến môi trường `HYBRID_COMPANIES_FILE`, `QDRANT_COLLECTION` | `src/hybrid_search/config.py` | Thử nhanh trên ít công ty, collection riêng, không phải sửa file chung |
 | Collection Qdrant tên `team_docs` | `config/default.yaml` | Không đè lên collection `financial_docs` của bản gốc nếu dùng chung Qdrant |
 | Bộ chấm điểm chung | `scripts/team/`, `evaluation/team/`, `src/hybrid_search/evaluation/team_metrics.py` | Benchmark gốc chấm bằng khớp từ khóa nên thiên vị BM25 |
 
@@ -39,6 +40,30 @@ pytest -q tests/unit
 ```
 
 Ghi lại số chunk mà `info` in ra. Cả nhóm phải ra cùng một số; nếu lệch là dữ liệu tải về khác nhau.
+
+### 2.1. Chỉ một người index đủ, cả nhóm dùng chung
+
+Index đủ 13 công ty rất lâu trên CPU. Không ai cần tự làm lại:
+
+1. Người có máy mạnh nhất chạy `ingest` và `index --recreate` (để qua đêm cũng được).
+   Nếu máy đã có dữ liệu của repo gốc, chép `data/raw/edgar` từ folder cũ sang trước: file đã tải sẽ không tải lại.
+2. Xong thì `docker compose stop`, nén hai thư mục `qdrant_storage` và `data/processed`, gửi lên Drive.
+3. Người khác giải nén vào đúng chỗ trong `F:\topic3-team`, chạy `docker compose up -d`, rồi `python -m hybrid_search.cli info` để kiểm tra đúng số chunk.
+
+Cả nhóm dùng cùng image `qdrant/qdrant:v1.14.0` nên chép thư mục là dùng được.
+
+### 2.2. Thử nhanh trên dữ liệu nhỏ (Phần 1, Phần 2)
+
+Phần nào phải index lại thì thử trên 3 công ty mới, collection riêng, để không đè bản chung:
+
+```powershell
+$env:HYBRID_COMPANIES_FILE = "config/companies_new3.yaml"
+$env:QDRANT_COLLECTION = "team_docs_part2"
+python -m hybrid_search.cli ingest
+python -m hybrid_search.cli index --recreate
+```
+
+Hai biến này chỉ sống trong cửa sổ terminal hiện tại. Mở terminal mới là quay về bản chung `team_docs`. Lưu ý `ingest` ghi đè `data/processed/`, nên trước khi thử nhỏ hãy sao lưu `data/processed` của bản chung. Khi so sánh, baseline và bản sửa phải chạy trên **cùng** bộ dữ liệu (cùng nhỏ hoặc cùng đủ).
 
 ## 3. Nhánh và phạm vi sửa
 

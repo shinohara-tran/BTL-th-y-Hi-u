@@ -1,17 +1,90 @@
-# Bộ dữ liệu của nhóm Topic 3 (thay cho 10 công ty công nghệ của repo gốc).
-# Danh sách gốc vẫn giữ ở config/companies_original.yaml.
+# Bộ dữ liệu của nhóm Topic 3 = 10 công ty của repo gốc + 3 công ty mới.
 #
-# Chọn 3 công ty ở 3 ngành khác hẳn nhau để kiểm tra xem kết luận của bài báo
-# có còn đúng ngoài ngành công nghệ không:
-#   VFS  - VinFast: công ty Việt Nam niêm yết ở Mỹ, nộp 20-F (mẫu cho công ty nước ngoài)
-#   LLY  - Eli Lilly: dược phẩm, nhiều tên thuốc và hoạt chất hiếm (hợp để thử BM25 vs Dense)
-#   JPM  - JPMorgan Chase: ngân hàng, thuật ngữ vốn và quản trị rủi ro (CET1, Basel III...)
+# 10 công ty gốc giữ nguyên như bài báo (để so được với số liệu của tác giả).
+# 3 công ty mới ở 3 ngành khác hẳn, để kiểm tra kết luận của bài ngoài ngành công nghệ:
+#   VFS  - VinFast: công ty Việt Nam niêm yết ở Mỹ, nộp 20-F
+#   LLY  - Eli Lilly: dược phẩm, nhiều tên thuốc và hoạt chất hiếm
+#   JPM  - JPMorgan Chase: ngân hàng, thuật ngữ vốn và rủi ro (CET1, Basel III...)
 #
-# Lưu ý: chỉ lấy 10-K / 20-F để index nhanh. Muốn thêm 10-Q thì thêm "10-Q" vào forms.
-# 6-K của VinFast phần lớn là trang bìa, nội dung nằm ở phụ lục EX-99 mà repo không tải,
-# nên tạm không lấy.
+# Muốn thử nhanh trên ít dữ liệu: dùng config/companies_new3.yaml (chỉ 3 công ty mới)
+# bằng biến môi trường, xem docs/team/WORKFLOW.md mục 2.
+#
+# 3 công ty mới chỉ lấy 10-K / 20-F. 6-K của VinFast phần lớn là trang bìa,
+# nội dung nằm ở phụ lục EX-99 mà repo không tải, nên tạm không lấy.
 
 companies:
+  # ---------- 10 công ty của repo gốc ----------
+  - ticker: "NVDA"
+    name: "NVIDIA Corporation"
+    cik: "0001045810"
+    sector: "Semiconductors"
+    geography: "US"
+    forms: ["10-K", "10-Q"]
+
+  - ticker: "AAPL"
+    name: "Apple Inc."
+    cik: "0000320193"
+    sector: "Consumer Electronics"
+    geography: "US"
+    forms: ["10-K", "10-Q"]
+
+  - ticker: "MSFT"
+    name: "Microsoft Corporation"
+    cik: "0000789019"
+    sector: "Cloud & Software"
+    geography: "US"
+    forms: ["10-K", "10-Q"]
+
+  - ticker: "GOOGL"
+    name: "Alphabet Inc."
+    cik: "0001652044"
+    sector: "Internet & Cloud"
+    geography: "US"
+    forms: ["10-K", "10-Q"]
+
+  - ticker: "AMZN"
+    name: "Amazon.com, Inc."
+    cik: "0001018724"
+    sector: "E-Commerce & Cloud"
+    geography: "US"
+    forms: ["10-K", "10-Q"]
+
+  - ticker: "META"
+    name: "Meta Platforms, Inc."
+    cik: "0001326801"
+    sector: "Digital Media & AI"
+    geography: "US"
+    forms: ["10-K", "10-Q"]
+
+  - ticker: "TSLA"
+    name: "Tesla, Inc."
+    cik: "0001318605"
+    sector: "Automotive & Energy"
+    geography: "US"
+    forms: ["10-K", "10-Q"]
+
+  - ticker: "AMD"
+    name: "Advanced Micro Devices, Inc."
+    cik: "0000002488"
+    sector: "Semiconductors"
+    geography: "US"
+    forms: ["10-K", "10-Q"]
+
+  - ticker: "INTC"
+    name: "Intel Corporation"
+    cik: "0000050863"
+    sector: "Semiconductors"
+    geography: "US"
+    forms: ["10-K", "10-Q"]
+
+  - ticker: "TSM"
+    name: "Taiwan Semiconductor Manufacturing Co., Ltd."
+    cik: "0001046179"
+    sector: "Semiconductors"
+    geography: "Taiwan"
+    forms: ["20-F", "6-K"]
+
+  # ---------- 3 công ty mới của nhóm ----------
   - ticker: "VFS"
     name: "VinFast Auto Ltd."
     cik: "0001913510"

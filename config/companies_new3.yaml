@@ -1,0 +1,24 @@
+# Chỉ 3 công ty mới, dùng để thử nhanh (index ít chunk hơn nhiều).
+# Cách dùng: xem docs/team/WORKFLOW.md mục 2.
+
+companies:
+  - ticker: "VFS"
+    name: "VinFast Auto Ltd."
+    cik: "0001913510"
+    sector: "Electric Vehicles"
+    geography: "Vietnam"
+    forms: ["20-F"]
+
+  - ticker: "LLY"
+    name: "Eli Lilly and Company"
+    cik: "0000059478"
+    sector: "Pharmaceuticals"
+    geography: "US"
+    forms: ["10-K"]
+
+  - ticker: "JPM"
+    name: "JPMorgan Chase & Co."
+    cik: "0000019617"
+    sector: "Banking"
+    geography: "US"
+    forms: ["10-K"]

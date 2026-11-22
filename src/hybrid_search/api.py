@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, Field
 
-from hybrid_search.config import AppConfig, get_project_root
+from hybrid_search.config import AppConfig, get_project_root, load_config
 from hybrid_search.evaluation.benchmark import BenchmarkRunner
 from hybrid_search.models.filter import MetadataFilter
 from hybrid_search.retrieval.engine import SearchEngine
@@ -42,7 +42,8 @@ def get_default_engine() -> SearchEngine:
     """Lazily initialize global SearchEngine instance on first actual query."""
     global _lazy_engine
     if _lazy_engine is None:
-        _lazy_engine = SearchEngine()
+        # Team fix: read config/default.yaml like the CLI does (AppConfig() ignored the YAML).
+        _lazy_engine = SearchEngine(config=load_config())
     return _lazy_engine
 
 
@@ -75,14 +76,12 @@ def create_app(engine: Optional[SearchEngine] = None) -> FastAPI:
         eng = _get_engine()
         try:
             coll_info = eng.client.get_collection(eng.collection_name)
-            points_count = getattr(coll_info, "points_count", None) or getattr(coll_info, "vectors_count", 8609)
-            # Ensure consistent reporting of 8,609 chunks
-            if points_count < 8609:
-                points_count = 8609
+            # Team fix: report the real count (upstream clamped it to >= 8,609).
+            points_count = getattr(coll_info, "points_count", None) or 0
             status_val = getattr(coll_info, "status", "green")
         except Exception:
-            points_count = 8609
-            status_val = "green"
+            points_count = 0
+            status_val = "unavailable"
 
         storage_mode = "embedded"
         if hasattr(eng.client, "_client"):
@@ -105,17 +104,10 @@ def create_app(engine: Optional[SearchEngine] = None) -> FastAPI:
     async def get_metadata() -> Dict[str, Any]:
         """Returns available tickers, form types, SEC item definitions, and retrieval methods."""
         return {
+            # Team fix: build the company list from config/companies.yaml instead of the hardcoded 10 tickers.
             "tickers": [
-                {"ticker": "AAPL", "name": "Apple Inc.", "cik": "0000320193", "sector": "Consumer Electronics", "fy_end": "Sep 30", "form": "10-K, 10-Q"},
-                {"ticker": "MSFT", "name": "Microsoft Corporation", "cik": "0000789019", "sector": "Software & Cloud", "fy_end": "Jun 30", "form": "10-K, 10-Q"},
-                {"ticker": "NVDA", "name": "NVIDIA Corporation", "cik": "0001045810", "sector": "Semiconductors & AI Compute", "fy_end": "Jan 31", "form": "10-K, 10-Q"},
-                {"ticker": "TSLA", "name": "Tesla, Inc.", "cik": "0001318605", "sector": "Automotive & Energy Storage", "fy_end": "Dec 31", "form": "10-K, 10-Q"},
-                {"ticker": "META", "name": "Meta Platforms, Inc.", "cik": "0001326801", "sector": "Social Media & Advertising", "fy_end": "Dec 31", "form": "10-K, 10-Q"},
-                {"ticker": "AMD", "name": "Advanced Micro Devices, Inc.", "cik": "0000002488", "sector": "Semiconductors (x86 & Accelerators)", "fy_end": "Dec 31", "form": "10-K, 10-Q"},
-                {"ticker": "INTC", "name": "Intel Corporation", "cik": "0000050863", "sector": "Semiconductors & Foundry", "fy_end": "Dec 31", "form": "10-K, 10-Q"},
-                {"ticker": "TSM", "name": "Taiwan Semiconductor Manufacturing Co.", "cik": "0001046179", "sector": "Pure-Play Semiconductor Foundry", "fy_end": "Dec 31", "form": "20-F (Foreign)"},
-                {"ticker": "AMZN", "name": "Amazon.com, Inc.", "cik": "0001018724", "sector": "E-Commerce & AWS Cloud", "fy_end": "Dec 31", "form": "10-K, 10-Q"},
-                {"ticker": "GOOGL", "name": "Alphabet Inc.", "cik": "0001652044", "sector": "Search, Advertising & Cloud", "fy_end": "Dec 31", "form": "10-K, 10-Q"},
+                {"ticker": c.ticker, "name": c.name, "cik": c.cik, "sector": c.sector, "fy_end": "", "form": ", ".join(c.forms)}
+                for c in load_config().companies
             ],
             "form_types": ["10-K", "10-Q", "20-F"],
             "sec_filing_items": {

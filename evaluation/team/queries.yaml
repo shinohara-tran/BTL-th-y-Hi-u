@@ -1,0 +1,151 @@
+# Bộ câu hỏi chung của nhóm Topic 3.
+#
+# BẢN NHÁP: các câu dưới đây được viết theo các chủ đề thường có trong báo cáo của
+# 3 công ty, CHƯA ai kiểm tra trong báo cáo thật. Trước khi chốt, mỗi câu phải có
+# ít nhất một đoạn trả lời được trong dữ liệu đã index; câu nào không có thì sửa hoặc xóa.
+# Mục tiêu: khoảng 100 câu (hiện có 24).
+#
+# Trường:
+#   id                mã câu, không trùng
+#   query             câu hỏi đúng như người dùng gõ
+#   category          một trong:
+#                       exact_code   mã, số hiệu, tên chuẩn mực (BM25 nên mạnh)
+#                       semantic     hỏi theo ý, không trùng chữ với văn bản (Dense nên mạnh)
+#                       hybrid       vừa có tên riêng vừa có ý
+#                       rare_term    thuật ngữ hiếm
+#                       long         câu dài, nhiều vế
+#                       company      có nhắc tên công ty (cho Phần 3)
+#                       numeric_year hỏi con số theo năm (cho Phần 1 và Phần 4)
+#   expected_tickers  câu trả lời đúng phải thuộc công ty nào; để [] nếu công ty nào cũng được
+#   split             dev = dùng để chỉnh tham số; test = chỉ chạy lần cuối. Khoảng 30% dev.
+#   note              ghi chú tùy ý
+
+queries:
+  # ---------- Eli Lilly (LLY) ----------
+  - id: q001
+    query: "340B Drug Pricing Program contract pharmacy"
+    category: exact_code
+    expected_tickers: [LLY]
+    split: dev
+  - id: q002
+    query: "tirzepatide"
+    category: rare_term
+    expected_tickers: [LLY]
+    split: test
+  - id: q003
+    query: "risk that the company cannot make enough of its most popular medicines to meet demand"
+    category: semantic
+    expected_tickers: [LLY]
+    split: test
+  - id: q004
+    query: "Mounjaro revenue in 2024"
+    category: numeric_year
+    expected_tickers: [LLY]
+    split: dev
+  - id: q005
+    query: "How does Eli Lilly describe competition from compounded versions of its medicines?"
+    category: company
+    expected_tickers: [LLY]
+    split: test
+  - id: q006
+    query: "What does the company say about government negotiation of drug prices and its expected effect on future revenue?"
+    category: long
+    expected_tickers: [LLY]
+    split: test
+  - id: q007
+    query: "Inflation Reduction Act Medicare price negotiation"
+    category: hybrid
+    expected_tickers: [LLY]
+    split: test
+
+  # ---------- JPMorgan Chase (JPM) ----------
+  - id: q008
+    query: "Standardized CET1 capital ratio"
+    category: exact_code
+    expected_tickers: [JPM]
+    split: test
+  - id: q009
+    query: "First Republic Bank acquisition"
+    category: rare_term
+    expected_tickers: [JPM]
+    split: dev
+  - id: q010
+    query: "how higher deposit costs could reduce the profit the bank makes on loans"
+    category: semantic
+    expected_tickers: [JPM]
+    split: test
+  - id: q011
+    query: "net interest income in 2024"
+    category: numeric_year
+    expected_tickers: [JPM]
+    split: test
+  - id: q012
+    query: "How does JPMorgan Chase describe its cybersecurity risks?"
+    category: company
+    expected_tickers: [JPM]
+    split: dev
+  - id: q013
+    query: "Basel III endgame proposal effect on capital requirements"
+    category: hybrid
+    expected_tickers: [JPM]
+    split: test
+  - id: q014
+    query: "What legal proceedings and regulatory investigations are disclosed, and how does the firm estimate its litigation reserves?"
+    category: long
+    expected_tickers: [JPM]
+    split: test
+
+  # ---------- VinFast (VFS) ----------
+  - id: q015
+    query: "VF 3 deliveries"
+    category: rare_term
+    expected_tickers: [VFS]
+    split: test
+  - id: q016
+    query: "can the company keep operating without more money from its founder"
+    category: semantic
+    expected_tickers: [VFS]
+    split: dev
+  - id: q017
+    query: "substantial doubt about ability to continue as a going concern"
+    category: exact_code
+    expected_tickers: [VFS]
+    split: test
+  - id: q018
+    query: "How does VinFast describe its reliance on Vingroup for financial support?"
+    category: company
+    expected_tickers: [VFS]
+    split: test
+  - id: q019
+    query: "number of vehicles delivered in 2024"
+    category: numeric_year
+    expected_tickers: [VFS]
+    split: dev
+  - id: q020
+    query: "North Carolina manufacturing facility construction timeline"
+    category: hybrid
+    expected_tickers: [VFS]
+    split: test
+  - id: q021
+    query: "What risks does the company face from selling electric vehicles in new international markets such as the United States and Europe?"
+    category: long
+    expected_tickers: [VFS]
+    split: test
+
+  # ---------- Nhiều công ty / không chỉ định ----------
+  - id: q022
+    query: "Compare how Eli Lilly and JPMorgan describe risks from artificial intelligence"
+    category: company
+    expected_tickers: [LLY, JPM]
+    split: test
+  - id: q023
+    query: "exposure to changes in interest rates"
+    category: semantic
+    expected_tickers: []
+    split: test
+  - id: q024
+    query: "How does VinFast describe competition from Tesla?"
+    category: company
+    expected_tickers: [VFS]
+    split: test
+    note: "Câu bẫy cho Phần 3: có 2 tên công ty nhưng chỉ VFS có trong dữ liệu; không được lọc theo TSLA"

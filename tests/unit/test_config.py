@@ -10,9 +10,10 @@ def test_load_default_config():
     assert config.embeddings.dense_model == "BAAI/bge-small-en-v1.5"
     assert config.embeddings.bm25_model == "Qdrant/bm25"
     assert config.embeddings.sparse_model == "prithivida/Splade_PP_en_v1"
-    assert config.qdrant.collection_name == "financial_docs"
-    assert len(config.companies) == 10
+    # Team dataset (config/companies.yaml); upstream list is kept in companies_original.yaml
+    assert config.qdrant.collection_name == "team_docs"
+    assert {c.ticker for c in config.companies} == {"VFS", "LLY", "JPM"}
 
-    nvda = next(c for c in config.companies if c.ticker == "NVDA")
-    assert nvda.cik == "0001045810"
-    assert "10-K" in nvda.forms
+    vfs = next(c for c in config.companies if c.ticker == "VFS")
+    assert vfs.cik == "0001913510"
+    assert vfs.forms == ["20-F"]

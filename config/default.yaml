@@ -21,7 +21,7 @@ qdrant:
   api_key: null                        # For Qdrant Cloud: "your-api-key-here" (or set QDRANT_API_KEY env var)
   local_path: "qdrant_data"
   prefer_local_embedded: false
-  collection_name: "financial_docs"
+  collection_name: "team_docs"        # tách khỏi collection gốc "financial_docs" của repo upstream
   dense_vector_size: 384
   upsert_batch_size: 100
 

@@ -53,7 +53,7 @@ class BaseRetriever(ABC):
             highlighted_text = chunk_text
             confidence = 0.0
             if query:
-                extracted = AnswerExtractor.extract(query, chunk_text)
+                extracted = AnswerExtractor.extract(query, chunk_text, company=payload.get("company") or "", ticker=payload.get("ticker") or "")
                 exact_answer = extracted.exact_answer
                 highlighted_text = extracted.highlighted_text
                 confidence = extracted.confidence

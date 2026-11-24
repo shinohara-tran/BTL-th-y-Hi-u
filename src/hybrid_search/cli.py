@@ -258,7 +258,8 @@ def main() -> None:
         "--method",
         "-m",
         default="sparse_dense",
-        choices=["bm25", "dense", "bm25_dense", "sparse", "sparse_dense", "rerank", "all"],
+        choices=["bm25", "dense", "bm25_dense", "sparse", "sparse_dense", "rerank",
+                 "hybrid_qp", "hybrid_qp_w", "hybrid_plus", "all"],
         help="Retrieval configuration",
     )
 

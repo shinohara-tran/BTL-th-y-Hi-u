@@ -118,6 +118,10 @@ def load_config(
         config_data.setdefault("qdrant", {})["api_key"] = os.environ["QDRANT_API_KEY"]
     if "QDRANT_COLLECTION" in os.environ:
         config_data.setdefault("qdrant", {})["collection_name"] = os.environ["QDRANT_COLLECTION"]
+    if "DENSE_MODEL" in os.environ:
+        config_data.setdefault("embeddings", {})["dense_model"] = os.environ["DENSE_MODEL"]
+    if "DENSE_VECTOR_SIZE" in os.environ:
+        config_data.setdefault("qdrant", {})["dense_vector_size"] = int(os.environ["DENSE_VECTOR_SIZE"])
     if "EDGAR_USER_AGENT" in os.environ:
         config_data.setdefault("edgar", {})["user_agent"] = os.environ["EDGAR_USER_AGENT"]
 

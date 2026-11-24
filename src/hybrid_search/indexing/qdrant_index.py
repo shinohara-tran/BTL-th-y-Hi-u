@@ -84,7 +84,8 @@ class QdrantIndexManager:
                     index=models.SparseIndexParams(on_disk=False),
                 ),
                 "sparse": models.SparseVectorParams(
-                    modifier=models.Modifier.IDF,
+                    # SPLADE weights are already learned; Qdrant IDF would count rarity twice
+                    modifier=None,
                     index=models.SparseIndexParams(on_disk=False),
                 ),
             },

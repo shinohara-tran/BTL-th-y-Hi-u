@@ -62,10 +62,10 @@ def test_parse_submissions_json():
 
 def test_annual_label_uses_period_end_with_filing_year_selection():
     recent = {"form": ["10-K"], "filingDate": ["2023-02-03"], "reportDate": ["2022-12-31"]}
-    filing, = EdgarClient.parse_submissions_json({"filings": {"recent": recent}}, "AMZN", "Amazon")
+    filing, = EdgarClient.parse_submissions_json({"cik": "1018724", "filings": {"recent": recent}}, "AMZN", "Amazon")
     assert filing.fiscal_period == "FY2022"
     recent.pop("reportDate")
-    filing, = EdgarClient.parse_submissions_json({"filings": {"recent": recent}}, "AMZN", "Amazon")
+    filing, = EdgarClient.parse_submissions_json({"cik": "1018724", "filings": {"recent": recent}}, "AMZN", "Amazon")
     assert filing.fiscal_period == "Unknown"
 
 

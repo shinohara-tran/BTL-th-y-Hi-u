@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "tag": "part3-code08",
+    "timestamp": "2026-11-24T12:01:21",
+    "git_commit": "c9a03cf-dirty",
+    "split": "dev",
+    "n_queries": 6,
+    "n_points": 13137,
+    "collection": "team_docs",
+    "dense_model": "BAAI/bge-small-en-v1.5",
+    "sparse_model": "prithivida/Splade_PP_en_v1",
+    "bm25_model": "Qdrant/bm25",
+    "rrf_constant": 60,
+    "machine": "Windows AMD64, Python 3.11.9"
+  },
+  "methods": {
+    "hybrid_plus": {
+      "summary": {
+        "mrr": null,
+        "ndcg@10": null,
+        "recall@10": null,
+        "p@10": null,
+        "company@5": 1.0,
+        "dup@5": 0.0,
+        "unjudged@10": null,
+        "latency_p50_ms": 410.2967999933753,
+        "latency_p95_ms": 1128.0955500114942,
+        "n_queries_labeled": 0
+      },
+      "by_category": {
+        "company": {
+          "mrr": null,
+          "ndcg@10": null,
+          "company@5": 1.0,
+          "dup@5": 0.0,
+          "n": 1
+        },
+        "exact_code": {
+          "mrr": null,
+          "ndcg@10": null,
+          "company@5": 1.0,
+          "dup@5": 0.0,
+          "n": 1
+        },
+        "numeric_year": {
+          "mrr": null,
+          "ndcg@10": null,
+          "company@5": 1.0,
+          "dup@5": 0.0,
+          "n": 2
+        },
+        "rare_term": {
+          "mrr": null,
+          "ndcg@10": null,
+          "company@5": 1.0,
+          "dup@5": 0.0,
+          "n": 1
+        },
+        "semantic": {
+          "mrr": null,
+          "ndcg@10": null,
+          "company@5": 1.0,
+          "dup@5": 0.0,
+          "n": 1
+        }
+      },
+      "per_query": [
+        {
+          "qid": "q001",
+          "category": "exact_code",
+          "mrr": null,
+          "ndcg@10": null,
+          "recall@10": null,
+          "p@10": null,
+          "company@5": 1.0,
+          "dup@5": 0.0,
+          "unjudged@10": null,
+          "top5": [
+            "LLY|10-K|FY2023|0000059478_0000059478-24-000065_chunk_0023",
+            "LLY|10-K|FY2024|0000059478_0000059478-25-000067_chunk_0022",
+            "LLY|10-K|FY2023|0000059478_0000059478-24-000065_chunk_0084",
+            "LLY|10-K|FY2024|0000059478_0000059478-25-000067_chunk_0208",
+            "LLY|10-K|FY2024|0000059478_0000059478-25-000067_chunk_0210"
+          ]
+        },
+        {
+          "qid": "q004",
+          "category": "numeric_year",
+          "mrr": null,
+          "ndcg@10": null,
+          "recall@10": null,
+          "p@10": null,
+          "company@5": 1.0,
+          "dup@5": 0.0,
+          "unjudged@10": null,
+          "top5": [
+            "LLY|10-K|FY2024|0000059478_0000059478-25-000067_chunk_0094",
+            "LLY|10-K|FY2023|0000059478_0000059478-24-000065_chunk_0090",
+            "LLY|10-K|FY2024|0000059478_0000059478-25-000067_chunk_0048",
+            "LLY|10-K|FY2024|0000059478_0000059478-25-000067_chunk_0092",
+            "LLY|10-K|FY2024|0000059478_0000059478-25-000067_chunk_0147"
+          ]
+        },
+        {
+          "qid": "q009",
+          "category": "rare_term",
+          "mrr": null,
+          "ndcg@10": null,
+          "recall@10": null,
+          "p@10": null,
+          "company@5": 1.0,
+          "dup@5": 0.0,
+          "unjudged@10": null,
+          "top5": [
+            "JPM|10-K|FY2024|0000019617_0000019617-25-000270_chunk_0134",
+            "JPM|10-K|FY2023|0000019617_0000019617-24-000225_chunk_0134",
+            "JPM|10-K|FY2023|0000019617_0000019617-24-000225_chunk_0790",
+            "JPM|10-K|FY2023|0000019617_0000019617-24-000225_chunk_0792",
+            "JPM|10-K|FY2023|0000019617_0000019617-24-000225_chunk_0130"
+          ]
+        },
+        {
+          "qid": "q012",
+          "category": "company",
+          "mrr": null,
+          "ndcg@10": null,
+          "recall@10": null,
+          "p@10": null,
+          "company@5": 1.0,
+          "dup@5": 0.0,
+          "unjudged@10": null,
+          "top5": [
+            "JPM|10-K|FY2023|0000019617_0000019617-24-000225_chunk_0375",
+            "JPM|10-K|FY2022|0000019617_0000019617-23-000231_chunk_0347",
+            "JPM|10-K|FY2023|0000019617_0000019617-24-000225_chunk_0377",
+            "JPM|10-K|FY2024|0000019617_0000019617-25-000270_chunk_0059",
+            "JPM|10-K|FY2024|0000019617_0000019617-25-000270_chunk_0209"
+          ]
+        },
+        {
+          "qid": "q016",
+          "category": "semantic",
+          "mrr": null,
+          "ndcg@10": null,
+          "recall@10": null,
+          "p@10": null,
+          "company@5": 1.0,
+          "dup@5": 0.0,
+          "unjudged@10": null,
+          "top5": [
+            "VFS|20-F|FY2024|0001913510_0001410578-25-000943_chunk_0234",
+            "VFS|20-F|FY2023|0001913510_0001104659-24-051842_chunk_0053",
+            "VFS|20-F|FY2023|0001913510_0001104659-24-051842_chunk_0295",
+            "VFS|20-F|FY2023|0001913510_0001104659-24-051842_chunk_0278",
+            "VFS|20-F|FY2023|0001913510_0001104659-24-051842_chunk_0318"
+          ]
+        },
+        {
+          "qid": "q019",
+          "category": "numeric_year",
+          "mrr": null,
+          "ndcg@10": null,
+          "recall@10": null,
+          "p@10": null,
+          "company@5": 1.0,
+          "dup@5": 0.0,
+          "unjudged@10": null,
+          "top5": [
+            "VFS|20-F|FY2024|0001913510_0001410578-25-000943_chunk_0207",
+            "VFS|20-F|FY2023|0001913510_0001104659-24-051842_chunk_0238",
+            "VFS|20-F|FY2024|0001913510_0001410578-25-000943_chunk_0047",
+            "VFS|20-F|FY2023|0001913510_0001104659-24-051842_chunk_0038",
+            "VFS|20-F|FY2024|0001913510_0001410578-25-000943_chunk_0214"
+          ]
+        }
+      ]
+    }
+  }
+}

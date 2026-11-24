@@ -16,34 +16,56 @@ class EdgarHtmlParser:
     """Parses SEC filing HTML/iXBRL documents into clean, searchable plain text with preserved tables."""
 
     @classmethod
-    def _extract_table_unit(cls, table, soup) -> str:
-        """Infers the currency and numerical scale from table headers or surrounding context."""
-        candidates = []
-        if table.caption:
-            candidates.append(table.caption.get_text())
+    def _detect_unit_text(cls, text: str) -> Optional[str]:
+        """Detects unit scale from a single text snippet, prioritizing explicit indicators."""
+        if not text:
+            return None
+        if re.search(r"in billions|dollars in billions|\$ in billions", text, re.IGNORECASE):
+            return "billions of USD"
+        if re.search(r"in millions|dollars in millions|\$ in millions", text, re.IGNORECASE):
+            return "millions of USD"
+        if re.search(r"in thousands|dollars in thousands|\$ in thousands", text, re.IGNORECASE):
+            return "thousands of USD"
+        if re.search(r"\bper share\b", text, re.IGNORECASE) and not re.search(r"\bexcept\s+per\s+share\b", text, re.IGNORECASE):
+            return "USD per share"
+        return None
 
-        # Scan previous sibling/ancestor tags up to 15 blocks to capture headers placed further above
-        for elem in table.find_all_previous(["p", "div", "span", "h1", "h2", "h3", "h4"], limit=15):
+    @classmethod
+    def _extract_table_unit(cls, table, soup) -> str:
+        """Infers the currency and numerical scale from table headers or surrounding context.
+        Prioritizes the nearest indicator to the table and prevents cross-table bleeding."""
+        # 1. Check table caption first
+        if table.caption:
+            u = cls._detect_unit_text(table.caption.get_text())
+            if u:
+                return u
+
+        # 2. Check explicit thead / header-only rows inside this table (e.g. <th>(in thousands)</th>)
+        thead = table.find("thead")
+        if thead:
+            u = cls._detect_unit_text(thead.get_text())
+            if u:
+                return u
+        else:
+            first_tr = table.find("tr")
+            if first_tr and first_tr.find_all("th") and not first_tr.find_all("td"):
+                u = cls._detect_unit_text(first_tr.get_text())
+                if u:
+                    return u
+
+        # 3. Scan preceding block elements backwards; stop at preceding table or major section header
+        for elem in table.find_all_previous(["p", "div", "span", "table", "h1", "h2", "h3"], limit=20):
+            if elem == table:
+                continue
+            if elem.name in ["table", "h1", "h2"]:
+                break
             txt = elem.get_text(strip=True)
             if txt:
-                candidates.append(txt)
-                if elem.name in ["table", "h1"]:
-                    break
+                u = cls._detect_unit_text(txt)
+                if u:
+                    return u
 
-        for tr in table.find_all("tr")[:5]:
-            candidates.append(tr.get_text())
-
-        context_str = " ".join(candidates)
-
-        if re.search(r"in billions|dollars in billions|\(\$ in billions\)", context_str, re.IGNORECASE):
-            return "billions of USD"
-        if re.search(r"in millions|dollars in millions|\(\$ in millions\)", context_str, re.IGNORECASE):
-            return "millions of USD"
-        if re.search(r"in thousands|dollars in thousands|\(\$ in thousands\)", context_str, re.IGNORECASE):
-            return "thousands of USD"
-        if re.search(r"per share", context_str, re.IGNORECASE):
-            return "USD per share"
-        return "không rõ đơn vị"
+        return "unknown unit"
 
     @classmethod
     def _clean_table_grid(cls, table) -> List[List[str]]:

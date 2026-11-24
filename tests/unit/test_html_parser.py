@@ -138,7 +138,29 @@ def test_parser_distant_header_unit_and_fallback():
     </div>
     """
     text_no_unit = EdgarHtmlParser.parse_html_to_text(html_no_unit)
-    assert "Active Users: 2024 = 100; 2023 = 80. Unit: không rõ đơn vị." in text_no_unit
+    assert "Active Users: 2024 = 100; 2023 = 80. Unit: unknown unit." in text_no_unit
+
+
+def test_nearest_table_unit_isolation():
+    html_consecutive = """
+    <div>
+        <p>Statement of Operations (In millions)</p>
+        <table>
+            <tr><th>Years Ended</th><th>2024</th><th>2023</th></tr>
+            <tr><td>Total net sales</td><td>$391,035</td><td>$383,285</td></tr>
+        </table>
+        <p>Other Financial Data (in thousands)</p>
+        <table>
+            <tr><th>Years Ended</th><th>2024</th><th>2023</th></tr>
+            <tr><td>Marketing expense</td><td>500</td><td>450</td></tr>
+        </table>
+    </div>
+    """
+    text = EdgarHtmlParser.parse_html_to_text(html_consecutive)
+    assert "Total net sales: 2024 = $391,035; 2023 = $383,285. Unit: millions of USD." in text
+    assert "Marketing expense: 2024 = 500; 2023 = 450. Unit: thousands of USD." in text
+    # Ensure Table 2 was not incorrectly infected with 'millions of USD'
+    assert "Marketing expense: 2024 = 500; 2023 = 450. Unit: millions of USD." not in text
 
 
 def test_table_intro_merging_and_extractor_fact_pinpoint():

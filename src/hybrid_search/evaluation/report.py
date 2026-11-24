@@ -21,7 +21,10 @@ class BenchmarkReporter:
         console.print("[bold white]    FINANCIAL INTELLIGENCE HYBRID SEARCH BENCHMARK RESULTS            [/bold white]")
         console.print("[bold cyan]======================================================================[/bold cyan]\n")
 
-        methods = ["bm25", "dense", "bm25_dense", "sparse", "sparse_dense", "rerank"]
+        methods = [
+            m for m in ["bm25", "dense", "bm25_dense", "sparse", "sparse_dense", "rerank", "hybrid_qp", "hybrid_qp_w", "hybrid_plus"]
+            if m in summary_data.get("overall", {})
+        ]
         method_labels = {
             "bm25": "BM25 (Lexical)",
             "dense": "Dense (BGE)",
@@ -29,6 +32,9 @@ class BenchmarkReporter:
             "sparse": "Sparse (SPLADE)",
             "sparse_dense": "Sparse + Dense",
             "rerank": "Neural Rerank",
+            "hybrid_qp": "Smart QP",
+            "hybrid_qp_w": "Smart QP+W",
+            "hybrid_plus": "Smart Plus",
         }
 
         # 1. Overall Quality Comparison Table
@@ -101,7 +107,10 @@ class BenchmarkReporter:
         out_file = Path(output_path)
         out_file.parent.mkdir(parents=True, exist_ok=True)
 
-        methods = ["bm25", "dense", "bm25_dense", "sparse", "sparse_dense", "rerank"]
+        methods = [
+            m for m in ["bm25", "dense", "bm25_dense", "sparse", "sparse_dense", "rerank", "hybrid_qp", "hybrid_qp_w", "hybrid_plus"]
+            if m in summary_data.get("overall", {})
+        ]
         method_labels = {
             "bm25": "BM25 (Lexical)",
             "dense": "Dense (BGE)",
@@ -109,6 +118,9 @@ class BenchmarkReporter:
             "sparse": "Sparse (SPLADE)",
             "sparse_dense": "Sparse + Dense",
             "rerank": "Neural Rerank (2-Stage)",
+            "hybrid_qp": "Smart QP",
+            "hybrid_qp_w": "Smart QP+W",
+            "hybrid_plus": "Smart Plus",
         }
 
         lines = [

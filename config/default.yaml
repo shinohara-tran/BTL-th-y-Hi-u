@@ -31,7 +31,7 @@ retrieval:
   rrf_constant: 60
   # Phần 3: trọng số BM25 theo loại câu hỏi (Dense = 1 - trọng số). Chỉnh trên tập dev.
   lexical_weight_code: 0.7      # câu có mã: ASC 606, MI300, CET1...
-  lexical_weight_concept: 0.3   # câu dài, hỏi theo ý
+  lexical_weight_concept: 0.5   # câu dài, hỏi theo ý
   dedup_threshold: 0.95         # cosine >= ngưỡng này thì coi là đoạn lặp
 
 benchmark:

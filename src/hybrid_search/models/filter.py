@@ -14,6 +14,7 @@ class MetadataFilter(BaseModel):
     sectors: Optional[List[str]] = Field(default=None, description="Filter by sectors (e.g. ['Semiconductors'])")
     geographies: Optional[List[str]] = Field(default=None, description="Filter by geographies (e.g. ['US'])")
     fiscal_periods: Optional[List[str]] = Field(default=None, description="Filter by fiscal period strings")
+    fact_years: Optional[List[int]] = Field(default=None, description="Filter by financial fact years (e.g. [2024, 2023])")
     filing_date_start: Optional[str] = Field(default=None, description="Start date (inclusive, YYYY-MM-DD)")
     filing_date_end: Optional[str] = Field(default=None, description="End date (inclusive, YYYY-MM-DD)")
 
@@ -26,6 +27,7 @@ class MetadataFilter(BaseModel):
             self.sectors,
             self.geographies,
             self.fiscal_periods,
+            self.fact_years,
             self.filing_date_start,
             self.filing_date_end,
         ])

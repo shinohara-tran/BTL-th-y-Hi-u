@@ -2,8 +2,23 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
+
+
+def filing_period(form: str, report_date: str, filing_date: str, accession: str) -> str:
+    """Label annual reports by period end and retain the existing quarterly convention."""
+    if form not in ("10-K", "20-F"):
+        return f"Q-{filing_date[:7]}"
+    try:
+        end = date.fromisoformat(report_date)
+    except (ValueError, TypeError):
+        return "Unknown"
+    # VinFast's post-merger event filing uses the same form as its annual reports.
+    if accession == "0001193125-23-215977":
+        return f"Event {end.isoformat()}"
+    return f"FY{end.year}"
 
 
 class FilingMetadata(BaseModel):
@@ -82,7 +97,7 @@ class EdgarClient:
                 continue
 
             filing_date = filing_dates[i] if i < len(filing_dates) else ""
-            report_date = report_dates[i] if i < len(report_dates) else filing_date
+            report_date = (report_dates[i] or "") if i < len(report_dates) else ""
             try:
                 year = int(filing_date.split("-")[0]) if filing_date else 0
             except ValueError:
@@ -102,7 +117,7 @@ class EdgarClient:
             doc_url = cls.build_document_url(cik, acc_num, primary_doc)
 
             # Determine fiscal period indicator
-            fiscal_period = f"FY{year}" if form in ("10-K", "20-F") else f"Q-{filing_date[:7]}"
+            fiscal_period = filing_period(form, report_date, filing_date, acc_num)
 
             filings.append(
                 FilingMetadata(

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 from qdrant_client import QdrantClient
-from hybrid_search.config import AppConfig
+from hybrid_search.config import AppConfig, load_config
 from hybrid_search.embeddings.bm25 import BM25EmbeddingGenerator
 from hybrid_search.embeddings.dense import DenseEmbeddingGenerator
 from hybrid_search.embeddings.sparse import SpladeEmbeddingGenerator
@@ -31,7 +31,7 @@ class SearchEngine:
         client: Optional[QdrantClient] = None,
         in_memory: bool = False,
     ):
-        self.config = config or AppConfig()
+        self.config = config or load_config()
         self.index_manager = QdrantIndexManager(config=self.config, client=client, in_memory=in_memory)
         self.client = self.index_manager.client
         self.collection_name = self.config.qdrant.collection_name

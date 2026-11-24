@@ -53,7 +53,7 @@ class BaseRetriever(ABC):
             highlighted_text = chunk_text
             confidence = 0.0
             if query:
-                extracted = AnswerExtractor.extract(query, chunk_text)
+                extracted = AnswerExtractor.extract(query, chunk_text, company=payload.get("company") or "", ticker=payload.get("ticker") or "")
                 exact_answer = extracted.exact_answer
                 highlighted_text = extracted.highlighted_text
                 confidence = extracted.confidence
@@ -70,6 +70,7 @@ class BaseRetriever(ABC):
                     document_type=str(payload.get("document_type", "")),
                     filing_date=str(payload.get("filing_date", "")),
                     fiscal_period=str(payload.get("fiscal_period", "")),
+                    fact_years=list(payload.get("fact_years", [])),
                     section=str(payload.get("section", "")),
                     sector=str(payload.get("sector", "Unknown")),
                     geography=str(payload.get("geography", "US")),

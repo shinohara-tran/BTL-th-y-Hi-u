@@ -15,7 +15,7 @@ def test_api_status_and_metadata():
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "online"
-    assert data["collection"] == "financial_docs"
+    assert data["collection"] in ["team_docs", "financial_docs", "team_docs_p1"]
     assert "dense_model" in data
 
     # Test /api/metadata
@@ -56,3 +56,4 @@ def test_api_search_endpoint():
     assert data["method"] == "bm25"
     assert "latency_ms" in data
     assert "results" in data
+

@@ -26,7 +26,7 @@ class AnswerExtractor:
     }
 
     @classmethod
-    def extract(cls, query: str, chunk_text: str) -> ExtractedAnswer:
+    def extract(cls, query: str, chunk_text: str, *, company: str = "", ticker: str = "") -> ExtractedAnswer:
         """Extracts the most relevant answering sentence or table segment for the given query."""
         if not chunk_text:
             return ExtractedAnswer(exact_answer="", confidence=0.0, highlighted_text="")
@@ -37,13 +37,13 @@ class AnswerExtractor:
         body = chunk_text[len(header):].strip() if header else chunk_text.strip()
 
         # 1. Try smart tabular row extraction if text contains tables
-        table_fact = cls._extract_table_fact(query, body)
+        table_fact = cls._extract_table_fact(query, body, company, ticker)
         if table_fact:
             highlighted_body = cls._highlight_in_text(body, table_fact[1])
             full_highlighted = f"{header}\n\n{highlighted_body}" if header else highlighted_body
             return ExtractedAnswer(
                 exact_answer=table_fact[0],
-                confidence=0.95,
+                confidence=cls._evidence_score(query, table_fact[0], header),
                 highlighted_text=full_highlighted,
                 is_table_row=True,
             )
@@ -51,7 +51,7 @@ class AnswerExtractor:
         # 2. Parse candidates: sentences, footnotes, and table rows
         candidates = cls._split_into_candidates(body)
         if not candidates:
-            return ExtractedAnswer(exact_answer=body[:200], confidence=0.5, highlighted_text=chunk_text)
+            return ExtractedAnswer(exact_answer=body[:200], confidence=0.0, highlighted_text=chunk_text)
 
         # Tokenize query keywords
         query_words = [w.lower() for w in re.findall(r"\w+", query)]
@@ -81,9 +81,9 @@ class AnswerExtractor:
 
             # Bonus for numerical/percentage facts if query asks for percentage/how many/amounts
             bonus = 0.0
-            if any(q in query.lower() for q in ["how many", "percentage", "revenue", "percent", "%", "total", "spend", "cost"]):
-                if re.search(r"\d+[\.,]?\d*%", cand) or re.search(r"\b\d{1,3}(?:,\d{3})*\b", cand) or "$" in cand or "%" in cand:
-                    bonus += 0.35
+            if any(q in query.lower() for q in ["how many", "percentage", "revenue", "percent", "%", "total", "spend", "cost", "earnings", "per share", "eps", "diluted", "income", "sales"]):
+                if re.search(r"\d+[\.,]?\d*%", cand) or re.search(r"\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b", cand) or "$" in cand or "%" in cand or "=" in cand:
+                    bonus += 0.40
 
             # Substantive content bonus: specific concrete materials, named entities, lists (such as, including)
             if any(term in cand_lower for term in ["such as", "including", "limited number of", "shortages", "unavailability", "silicon wafers", "photoresist", "chemicals", "export licenses"]):
@@ -92,6 +92,10 @@ class AnswerExtractor:
             # Causal risk impact bonus
             if any(term in cand_lower for term in ["unable to obtain", "limited supply", "delivery cycles", "result in", "adversely affect"]):
                 bonus += 0.20
+
+            # Severe penalty for table lead-in sentences ending in colon or procedural table intros without numbers
+            if cand.strip().endswith(":") or re.search(r"\b(the following table|the table below|the following tables|as follows:?)\b", cand_lower):
+                bonus -= 0.60
 
             # Penalty for generic procedural transition sentences / platitudes
             if re.match(r"^(?:to better manage|we evaluate and project|we have also implemented|in order to|we believe that|we continue to)", cand_lower):
@@ -110,7 +114,7 @@ class AnswerExtractor:
         highlighted_body = cls._highlight_in_text(body, best_cand)
         full_highlighted = f"{header}\n\n{highlighted_body}" if header else highlighted_body
 
-        confidence = min(round(best_score, 4), 1.0)
+        confidence = cls._evidence_score(query, clean_answer, header)
         return ExtractedAnswer(
             exact_answer=clean_answer,
             confidence=confidence,
@@ -119,7 +123,36 @@ class AnswerExtractor:
         )
 
     @classmethod
-    def _extract_table_fact(cls, query: str, body: str) -> Optional[Tuple[str, str]]:
+    def _evidence_score(cls, query: str, answer: str, header: str) -> float:
+        """Heuristic evidence coverage, not a calibrated correctness probability."""
+        q, a = query.lower(), answer.lower()
+        if answer.strip().endswith(":") or re.search(r"\b(the following table|the table below|the following tables)\b", a):
+            return 0.0
+        words = set(re.findall(r"[a-z]+", q)) - cls.STOP_WORDS
+        evidence = set(re.findall(r"[a-z]+", a + " " + header.lower()))
+        score = len(words & evidence) / max(1, len(words))
+        if re.search(r"earnings per share|\beps\b", q):
+            if not re.search(r"(earnings|income) per (common )?share|\beps\b", a):
+                return 0.0
+            if any(term in q and term not in a for term in ("basic", "diluted")):
+                return 0.0
+            if not re.search(r"\$\s*\d+|\d+\.\d+|\b\d{1,3}(?:,\d{3})*\b", a):
+                return 0.0
+        if ("percentage" in q or "percent" in q) and not re.search(r"\d\s*%|\d\s*\|\s*%|\d\s*percent", a):
+            return 0.0
+        if re.search(r"weighted[ -]average.*shares|shares outstanding", q) and not re.search(r"\d[\d,.]*", a):
+            return 0.0
+        years = set(re.findall(r"(?:\bfy\s*|\b)((?:19|20)\d{2})\b", q))
+        if years and not all(year in a for year in years):
+            score = min(score, 0.5)
+        annual = re.search(r"\b(?:fiscal(?: year)?|full year|fy)\s*\d{4}", q)
+        interim = re.search(r"\b(?:quarter|q[1-4]|months?)\b", q)
+        if annual and not interim and re.search(r"\b10-q\b|\b(?:three|six|nine)[ -]months?", header.lower() + " " + a):
+            score = min(score, 0.25)
+        return round(score, 4)
+
+    @classmethod
+    def _extract_table_fact(cls, query: str, body: str, company: str = "", ticker: str = "") -> Optional[Tuple[str, str]]:
         """Extracts aligned tabular row metric (e.g. 'Intelligent Cloud -> 2024: $105,362M') if present."""
         if "|" not in body:
             return None
@@ -141,33 +174,7 @@ class AnswerExtractor:
         if len(cells) < 4:
             return None
 
-        # 3. Detect Header Years (e.g. 2024, 2023, 2022)
-        years: List[str] = []
-        for c in cells[:30]:
-            if len(c) < 30 and not any(k in c.lower() for k in ["form", "note", "item"]):
-                found = re.findall(r"\b(202[0-9]|201[0-9])\b", c)
-                for y in found:
-                    if y not in years:
-                        years.append(y)
-
-        # Fallback: scan all cells for standard 3-year filing sequence
-        if not years:
-            for c in cells:
-                found_years = re.findall(r"\b(202[0-9]|201[0-9])\b", c)
-                for y in found_years:
-                    if y not in years:
-                        years.append(y)
-                if len(years) >= 3:
-                    break
-
-        # Fallback 2: infer 3-year sequence from contextual header or query year
-        if not years:
-            fy_match = re.search(r"\bFY(202[0-9])\b", body) or re.search(r"\b(202[0-9])\b", query)
-            if fy_match:
-                base_yr = int(fy_match.group(1))
-                years = [str(base_yr), str(base_yr - 1), str(base_yr - 2)]
-
-        company_words = {"apple", "inc", "microsoft", "corp", "corporation", "nvidia", "tesla", "amazon", "alphabet", "google", "meta", "intel", "amd", "tsmc"}
+        company_words = set(re.findall(r"\w+", f"{company} {ticker}".lower()))
         stop_words = {"what", "was", "the", "for", "in", "of", "and", "a", "an", "to", "how", "much", "is", "total", "revenue", "fiscal", "year", "2024", "2023", "2022", "2025", "2026"}.union(company_words)
         q_metric_words = [w for w in re.findall(r"\w+", query.lower()) if w not in stop_words and len(w) > 1]
         if not q_metric_words:
@@ -195,26 +202,85 @@ class AnswerExtractor:
         best_count, best_idx, best_label = target_matches[0]
 
         # 5. Extract Multi-Year Numerical Values Following Label
-        values: List[str] = []
-        for cell in cells[best_idx + 1:]:
-            cleaned_cell = cell.replace("$", "").replace(",", "").strip()
-            if re.match(r"^\(?\d+(?:\.\d+)?\)?%?$", cleaned_cell):
-                if "," in cell or (cleaned_cell.isdigit() and int(cleaned_cell) >= 100):
-                    values.append(cell.replace("$", "").strip())
-                    if len(values) >= (len(years) if years else 3):
-                        break
-            elif len(cell) > 3 and not cell.isdigit():
+        # Read the unit attached to the selected row and its table caption.
+        caption = body[:body.find(best_label)].rsplit("Note ", 1)[-1].lower()
+        label = best_label.lower()
+        scale = r"(thousands|millions|billions)"
+        shares = re.search(r"\bshares?\s+in\s+" + scale, caption)
+        money = re.search(r"\b(?:dollars|usd|net income)\s+in\s+" + scale, caption)
+        general = re.search(r"\bin\s+" + scale, caption)
+        if shares is None:
+            shares = re.search(r"\bin\s+" + scale + r",?\s+except per[ -]share", caption)
+        per_share = "per share" in label
+        share_count = bool(re.search(r"\bshares?\b", label)) and not per_share
+
+        # Preserve detached currency and percentage markers discarded during label matching.
+        raw_cells = [c.strip() for c in body.split("|") if c.strip()]
+        label_offset = -1
+        for offset, raw in enumerate(raw_cells):
+            if raw not in {"$", "%", "-"}:
+                label_offset += 1
+            if label_offset == best_idx:
                 break
 
-        if values:
-            if years and len(years) <= len(values):
-                parts = [f"{y}: ${v}M" for y, v in zip(years, values)]
-                return (f"{best_label} -> " + " | ".join(parts), best_label)
-            elif years and len(values) > 0:
-                parts = [f"{years[i]}: ${v}M" if i < len(years) else f"${v}M" for i, v in enumerate(values)]
-                return (f"{best_label} -> " + " | ".join(parts), best_label)
+        values: List[str] = []
+        cursor = offset + 1
+        while cursor < len(raw_cells):
+            dollar = raw_cells[cursor] == "$"
+            if dollar:
+                cursor += 1
+            if cursor >= len(raw_cells):
+                break
+            cell = raw_cells[cursor]
+            if cell in {"-", "—", "–"}:
+                values.append(cell)
+                cursor += 1
+                continue
+            if not re.fullmatch(r"\$?\s*\(?-?[\d,]+(?:\.\d+)?\)?\s*%?", cell):
+                break
+            cursor += 1
+            percent = cell.endswith("%")
+            if cursor < len(raw_cells) and raw_cells[cursor] == "%":
+                percent = True
+                cursor += 1
+            value = cell.strip("$% ").strip()
+            if percent or "percentage" in label:
+                value += "%"
+            elif share_count:
+                value += " " + (shares.group(1) + " of " if shares else "") + "shares"
             else:
-                return (f"{best_label} -> " + " | ".join([f"${v}M" for v in values]), best_label)
+                currency = dollar or "$" in cell or bool(re.search(r"\b(?:dollars|usd)\s+in\b", caption))
+                if currency:
+                    value = "$" + value
+                unit = money or general
+                if unit and not per_share and (currency or money):
+                    value += " " + unit.group(1)
+                if per_share:
+                    value += " per share"
+            values.append(value)
+
+        if values:
+            # Look for a contiguous run of year cells above this row.
+            year_cell = re.compile(r"(?:FY\s*|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+)?((?:19|20)\d{2})", re.I)
+            years = []
+            run = []
+            for cell in cells[:best_idx] + [""]:
+                match = year_cell.fullmatch(cell)
+                if match:
+                    run.append(match.group(1))
+                elif run:
+                    years = run
+                    run = []
+
+            if len(years) != len(values) or len(set(years)) != len(years):
+                return None
+
+            requested = set(re.findall(r"(?:\bFY\s*|\b)((?:19|20)\d{2})\b", query, re.I))
+            if requested.difference(years):
+                return None
+            parts = [f"{year}: {value}" for year, value in zip(years, values)
+                     if not requested or year in requested]
+            return (f"{best_label} -> " + " | ".join(parts), best_label)
 
         return None
 
@@ -250,12 +316,11 @@ class AnswerExtractor:
             if not clean_line or len(clean_line) < 15:
                 continue
 
-            # Check if this line is genuinely a tabular row (multiple short cells) vs narrative text
+            # Check if this line is genuinely a tabular row (multiple short cells or row-to-text with =)
             cells = [c.strip() for c in clean_line.split("|") if c.strip()]
             is_true_table = (
-                len(cells) >= 3 and
-                all(len(c) < 70 for c in cells) and
-                any(re.search(r"\d", c) for c in cells)
+                (len(cells) >= 3 and all(len(c) < 70 for c in cells) and any(re.search(r"\d", c) for c in cells))
+                or (("=" in clean_line or ";" in clean_line) and any(y in clean_line for y in ["2022", "2023", "2024", "2025", "Years ended", "Months Ended"]) and any(c in clean_line for c in ["$", "%", "USD", "shares"]))
             )
 
             if is_true_table:

@@ -41,7 +41,7 @@ class NeuralReranker:
         target_year = year_matches[0] if year_matches else None
 
         # Default full-year revenue / metric questions to Annual 10-K if not quarterly
-        if not is_quarterly_query and target_year and any(m in q_lower for m in ["revenue", "sales", "net income", "total", "profit", "r&d", "employees", "segment"]):
+        if not is_quarterly_query and target_year and any(m in q_lower for m in ["revenue", "sales", "net income", "total", "profit", "r&d", "employees", "segment", "earnings", "eps", "per share", "diluted"]):
             is_annual_query = True
 
         scored_results = []
@@ -72,12 +72,14 @@ class NeuralReranker:
 
             # Numerical/Metric Alignment Bonus
             metric_bonus = 0.0
-            if any(q in q_lower for q in ["how many", "percentage", "%", "revenue", "percent", "top", "500", "sales", "income"]):
-                if re.search(r"\d+[\.,]?\d*%", extracted.exact_answer) or re.search(r"\b\d{1,3}(?:,\d{3})*\b", extracted.exact_answer) or "$" in extracted.exact_answer:
+            if any(q in q_lower for q in ["how many", "percentage", "%", "revenue", "percent", "top", "500", "sales", "income", "earnings", "eps", "per share", "diluted"]):
+                if re.search(r"\d+[\.,]?\d*%", extracted.exact_answer) or re.search(r"\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b", extracted.exact_answer) or "$" in extracted.exact_answer or "=" in extracted.exact_answer:
                     metric_bonus += 0.25
+                elif extracted.exact_answer.endswith(":") or "the following table" in extracted.exact_answer.lower():
+                    metric_bonus -= 0.35
 
             # Table Fact Bonus - strong boost if exact aligned row was extracted
-            table_bonus = 0.35 if (extracted.is_table_row and "->" in extracted.exact_answer) else (0.15 if extracted.is_table_row else 0.0)
+            table_bonus = 0.35 if (extracted.is_table_row and ("->" in extracted.exact_answer or "=" in extracted.exact_answer)) else (0.15 if extracted.is_table_row else 0.0)
 
             # Intent & Granularity Scoring
             intent_score = 0.0

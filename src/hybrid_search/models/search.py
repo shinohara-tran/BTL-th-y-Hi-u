@@ -23,6 +23,7 @@ class SearchResult(BaseModel):
     sector: str = Field(default="Unknown", description="Industry sector")
     geography: str = Field(default="US", description="Geographic jurisdiction")
     source_url: str = Field(default="", description="EDGAR source URL")
+    fact_years: list[int] = Field(default_factory=list, description="Years of financial facts in chunk")
     retrieval_method: str = Field(
         ...,
         description="Method used: 'bm25', 'dense', 'sparse', 'bm25_dense', 'sparse_dense', 'rerank'"

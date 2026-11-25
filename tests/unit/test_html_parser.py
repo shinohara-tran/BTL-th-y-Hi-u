@@ -65,6 +65,15 @@ def test_parse_html_table_row_to_text():
     text = EdgarHtmlParser.parse_html_to_text(sample_table_html)
     assert "Services net sales: 2024 = 96,169; 2023 = 85,200; 2022 = 78,129. Unit: millions of USD." in text
     assert "Diluted earnings per share: 2024 = $6.08; 2023 = $6.13; 2022 = $6.11. Unit: USD per share." in text
+
+    from hybrid_search.retrieval.extractor import AnswerExtractor
+
+    ext = AnswerExtractor.extract("Apple diluted earnings per share in 2024", text)
+    assert "$6.08" in ext.exact_answer
+    assert not ext.exact_answer.endswith(":")
+    assert "The following table" not in ext.exact_answer
+    assert ext.confidence > 0.0
+
     assert "Weighted-average diluted shares: 2024 = 15,408; 2023 = 15,672; 2022 = 16,215. Unit: millions of shares." in text
 
 
@@ -164,8 +173,6 @@ def test_nearest_table_unit_isolation():
 
 
 def test_table_intro_merging_and_extractor_fact_pinpoint():
-    from hybrid_search.retrieval.extractor import AnswerExtractor
-
     html_intro = """
     <div>
         <p>The following table shows the computation of basic and diluted earnings per share for 2024, 2023 and 2022 (in millions, except per share):</p>
@@ -177,14 +184,7 @@ def test_table_intro_merging_and_extractor_fact_pinpoint():
     """
     text = EdgarHtmlParser.parse_html_to_text(html_intro)
     assert "Table context: The following table shows" in text
-    assert "Diluted earnings per share: 2024 = $6.08" in text
-
-    query = "Apple diluted earnings per share in 2024"
-    ext = AnswerExtractor.extract(query, text)
-    assert "$6.08" in ext.exact_answer
-    assert not ext.exact_answer.endswith(":")
-    assert "The following table" not in ext.exact_answer
-    assert ext.confidence > 0.0
+    assert "Diluted earnings per share: 2024 = $6.08; 2023 = $6.13; 2022 = $6.11. Unit: USD per share." in text
 
 
 

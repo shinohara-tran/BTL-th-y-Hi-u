@@ -1,0 +1,83 @@
+<HOME>\AppData\Local\Programs\Python\Python313\Lib\site-packages\qdrant_client\qdrant_remote.py:295: UserWarning: Failed to obtain server version. Unable to check client-server compatibility. Set check_compatibility=False to skip version check.
+  show_warning(
+D:\PTTC\financial-hybrid-search-qdrant\src\hybrid_search\indexing\qdrant_index.py:106: UserWarning: Payload indexes have no effect in the local Qdrant, except text indexes with `scoring`, which enable text queries. Please use server Qdrant if you need payload indexes.
+  self.client.create_payload_index(
+Notice: Qdrant server at http://localhost:6333 unavailable. Using local embedded storage at './qdrant_data'
+
+Fetching 5 files:   0%|          | 0/5 [00:00<?, ?it/s]Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+<HOME>\AppData\Local\Programs\Python\Python313\Lib\site-packages\huggingface_hub\file_download.py:129: UserWarning: `huggingface_hub` cache-system uses symlinks by default to efficiently store duplicated files but your machine does not support them in <HOME>\AppData\Local\Temp\fastembed_cache\models--Qdrant--bge-base-en-v1.5-onnx-Q. Caching files will still work but in a degraded version that might require more space on your disk. This warning can be disabled by setting the `HF_HUB_DISABLE_SYMLINKS_WARNING` environment variable. For more details, see https://huggingface.co/docs/huggingface_hub/how-to-cache#limitations.
+To support symlinks on Windows, you either need to activate Developer Mode or to run Python as an administrator. In order to activate developer mode, see this article: https://docs.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development
+  warnings.warn(message)
+
+Fetching 5 files:  20%|##        | 1/5 [00:00<00:01,  2.38it/s]
+Fetching 5 files:  40%|####      | 2/5 [00:07<00:13,  4.59s/it]
+Fetching 5 files: 100%|##########| 5/5 [00:07<00:00,  1.58s/it]
+128/8670 points | 0.8 min
+256/8670 points | 1.5 min
+384/8670 points | 2.2 min
+512/8670 points | 2.8 min
+640/8670 points | 3.4 min
+768/8670 points | 4.1 min
+896/8670 points | 4.8 min
+1024/8670 points | 5.4 min
+1152/8670 points | 6.1 min
+1280/8670 points | 6.7 min
+1408/8670 points | 7.4 min
+1536/8670 points | 8.0 min
+1664/8670 points | 8.7 min
+1792/8670 points | 9.3 min
+1920/8670 points | 10.0 min
+2048/8670 points | 10.6 min
+2176/8670 points | 11.3 min
+2304/8670 points | 11.9 min
+2432/8670 points | 12.7 min
+2560/8670 points | 13.3 min
+2688/8670 points | 14.0 min
+2816/8670 points | 14.7 min
+2944/8670 points | 15.3 min
+3072/8670 points | 16.0 min
+3200/8670 points | 16.7 min
+3328/8670 points | 17.3 min
+3456/8670 points | 18.0 min
+3584/8670 points | 18.6 min
+3712/8670 points | 19.3 min
+3840/8670 points | 20.0 min
+3968/8670 points | 20.7 min
+4096/8670 points | 21.3 min
+4224/8670 points | 22.0 min
+4352/8670 points | 22.7 min
+4480/8670 points | 23.4 min
+4608/8670 points | 24.0 min
+4736/8670 points | 24.7 min
+4864/8670 points | 25.3 min
+4992/8670 points | 26.0 min
+5120/8670 points | 26.6 min
+5248/8670 points | 27.3 min
+5376/8670 points | 27.9 min
+5504/8670 points | 28.6 min
+5632/8670 points | 29.2 min
+5760/8670 points | 29.9 min
+5888/8670 points | 30.5 min
+6016/8670 points | 31.2 min
+6144/8670 points | 31.8 min
+6272/8670 points | 32.6 min
+6400/8670 points | 33.2 min
+6528/8670 points | 33.9 min
+6656/8670 points | 34.5 min
+6784/8670 points | 35.2 min
+6912/8670 points | 35.9 min
+7040/8670 points | 36.5 min
+7168/8670 points | 37.2 min
+7296/8670 points | 37.8 min
+7424/8670 points | 38.5 min
+7552/8670 points | 39.2 min
+7680/8670 points | 39.8 min
+7808/8670 points | 40.5 min
+7936/8670 points | 41.3 min
+8064/8670 points | 42.1 min
+8192/8670 points | 42.9 min
+8320/8670 points | 43.6 min
+8448/8670 points | 44.3 min
+8576/8670 points | 45.0 min
+8670/8670 points | 45.4 min
+Copied 8670 points: financial_docs_e2 -> financial_docs_e3 in 45.4 min

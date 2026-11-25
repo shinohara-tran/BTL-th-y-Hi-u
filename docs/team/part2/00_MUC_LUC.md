@@ -54,7 +54,7 @@ NDCG@10:
 | `1_bao_cao/` | Báo cáo benchmark đầy đủ của từng thử nghiệm. Chỉ bảng 1 đến 3 là số đo; mục 5 đến 7 là chữ viết sẵn trong `report.py` |
 | `2_log/` | Toàn bộ output khi chạy. `e3_build.log` ghi tiến độ và thời gian tạo vector Dense |
 | `3_code/phan2_sua_doi.diff` | Các dòng code đã sửa so với commit gốc `16682dd` |
-| `3_code/clone_collection.py` | Script tạo ngăn mới bằng cách chép vector |
+| `scripts/team/clone_collection.py` | Script tạo ngăn mới bằng cách chép vector (nằm trong code, không chép vào `3_code/`) |
 | `4_cau_hinh/qdrant_meta.json` | Cấu hình các ngăn. Ngăn `financial_docs_e2` có `"sparse": modifier null`; ngăn `financial_docs_e3` có dense `size 768` |
 | `4_cau_hinh/thong_tin_may.txt` | CPU, RAM, phiên bản Python và thư viện |
 

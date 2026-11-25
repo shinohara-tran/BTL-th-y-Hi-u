@@ -32,7 +32,8 @@ class BM25EmbeddingGenerator:
 
     def embed_query(self, query: str) -> Tuple[List[int], List[float]]:
         """Generates sparse vector (indices, values) for a query string."""
-        emb_iter = self.model.embed([query], batch_size=1)
+        # query_embed: query-side BM25 weights (no doc-length normalization)
+        emb_iter = self.model.query_embed(query)
         emb = next(emb_iter)
         return emb.indices.tolist(), emb.values.tolist()
 

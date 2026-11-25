@@ -1,0 +1,10 @@
+﻿CPU: 12th Gen Intel(R) Core(TM) i5-12450HX
+RAM: 15.7 GB
+OS: Microsoft Windows 11 Home Single Language
+Python: Python 3.13.2
+Thu vien:
+  fastembed                 0.9.1
+  numpy                     2.2.5
+  onnxruntime               1.32.0
+  qdrant-client             1.20.0
+  tokenizers                0.22.2

@@ -1,0 +1,102 @@
+﻿====================================================================================================
+A. BM25: code gốc dùng embed() cho câu hỏi
+====================================================================================================
+
+A1. Trọng số từng từ trong câu hỏi (đúng ra mỗi từ phải là 1):
+  'NVDA export restrictions China'
+     gốc embed()       : [1.674, 1.674, 1.674, 1.674]
+     sửa query_embed() : [1.0, 1.0, 1.0, 1.0]
+  'revenue revenue growth'
+     gốc embed()       : [1.904, 1.679]
+     sửa query_embed() : [1.0, 1.0]
+  'risk risk risk factors'
+     gốc embed()       : [1.992, 1.674]
+     sửa query_embed() : [1.0, 1.0]
+
+A2. Có bao nhiêu câu trong 25 câu benchmark bị trọng số KHÔNG đều (tức là bị lệch thứ hạng)?
+  1/25 câu. 
+    ('long_03', 'Which semiconductor companies highlighted customer concentration where a small number of direct customers account for a significant percentage of total revenue?', [1.631, 1.631, 1.631, 1.873, 1.631, 1.631, 1.631, 1.631, 1.631, 1.631, 1.631, 1.631, 1.631])
+
+A3. Câu hỏi lặp từ: thứ hạng BM25 trên cùng dữ liệu, gốc vs sửa
+  Câu hỏi: 'Apple dividends dividends dividends share repurchase'
+  gốc :
+    1.  29.781 AAPL  Item 1A. Risk Factors  | [Apple Inc. (AAPL) | 10-K FY2023 | Section: Item 1A. Risk Factors] If the Company's effective tax rates were t
+    2.  29.073 AAPL  Item 1A. Risk Factors  | [Apple Inc. (AAPL) | 10-K FY2024 | Section: Item 1A. Risk Factors] General Risks The price of the Company's st
+    3.  29.073 AAPL  Item 1A. Risk Factors  | [Apple Inc. (AAPL) | 10-K FY2025 | Section: Item 1A. Risk Factors] General Risks The price of the Company's st
+    4.  28.935 AAPL  Item 5. Market for Com | [Apple Inc. (AAPL) | 10-K FY2024 | Section: Item 5. Market for Common Equity] Deemed Repatriation Tax Payable 
+    5.  28.737 AAPL  Item 5. Market for Com | [Apple Inc. (AAPL) | 10-K FY2023 | Section: Item 5. Market for Common Equity] * Apple Vision ProTM, the Compan
+  sửa :
+    1.  16.979 AAPL  Item 1A. Risk Factors  | [Apple Inc. (AAPL) | 10-K FY2023 | Section: Item 1A. Risk Factors] If the Company's effective tax rates were t
+    2.  16.524 AAPL  Item 1A. Risk Factors  | [Apple Inc. (AAPL) | 10-K FY2025 | Section: Item 1A. Risk Factors] General Risks The price of the Company's st
+    3.  16.524 AAPL  Item 1A. Risk Factors  | [Apple Inc. (AAPL) | 10-K FY2024 | Section: Item 1A. Risk Factors] General Risks The price of the Company's st
+    4.  16.411 AAPL  Item 5. Market for Com | [Apple Inc. (AAPL) | 10-K FY2024 | Section: Item 5. Market for Common Equity] Deemed Repatriation Tax Payable 
+    5.  16.369 AAPL  Item 5. Market for Com | [Apple Inc. (AAPL) | 10-K FY2023 | Section: Item 5. Market for Common Equity] * Apple Vision ProTM, the Compan
+  Top-5 trùng nhau: 5/5
+
+====================================================================================================
+B. SPLADE: code gốc để Modifier.IDF -> độ hiếm bị tính 2 lần
+====================================================================================================
+
+B1. Đếm mỗi token SPLADE xuất hiện trong bao nhiêu chunk (để tính IDF giống Qdrant)...
+  N = 8670 chunk, 14165 token khác nhau
+
+B2. Câu hỏi: 'Find references to NVIDIA's H200 supply constraints in Q4 filings.'
+  SPLADE đã tự cho từ quan trọng trọng số cao. Code gốc nhân thêm IDF:
+  token           SPLADE số chunk có    IDF  SPLADE×IDF
+  ##vid            2.472         918   2.24       5.550
+  ##200            1.991          33   5.56      11.061
+  q                1.807        2257   1.35       2.432
+  supply           1.771        1016   2.14       3.796
+  constraints      1.731         326   3.28       5.677
+  constraint       1.623         230   3.63       5.889
+  filing           1.449        3626   0.87       1.263
+  h                1.445         103   4.43       6.397
+  ##4              1.400        2435   1.27       1.778
+  ##ia             1.244         843   2.33       2.899
+  supplies         1.237        1061   2.10       2.598
+  n                1.209         933   2.23       2.694
+  limit            1.105        1394   1.83       2.019
+  4                1.088         754   2.44       2.657
+  limitations      1.000        1171   2.00       2.002
+  5 token nặng nhất theo SPLADE      : ['##vid', '##200', 'q', 'supply', 'constraints']
+  5 token nặng nhất sau khi nhân IDF : ['##200', 'h', 'constraint', 'constraints', '##vid']
+
+B3. Chạy 25 câu benchmark, SPLADE top-10, chấm bằng đúng luật benchmark:
+  id           RR gốc(IDF)  RR sửa
+  exact_01           1.000   1.000
+  exact_02           1.000   1.000
+  exact_03           1.000   1.000
+  exact_04           1.000   1.000
+  exact_05           1.000   1.000
+  semantic_01        0.000   0.333  <- tốt hơn
+  semantic_02        1.000   1.000
+  semantic_03        0.500   0.500
+  semantic_04        0.167   0.000  <- kém hơn
+  semantic_05        1.000   1.000
+  mixed_01           1.000   1.000
+  mixed_02           1.000   1.000
+  mixed_03           1.000   1.000
+  mixed_04           1.000   1.000
+  mixed_05           1.000   1.000
+  rare_01            1.000   1.000
+  rare_02            1.000   1.000
+  rare_03            1.000   1.000
+  rare_04            1.000   1.000
+  rare_05            1.000   1.000
+  long_01            1.000   1.000
+  long_02            0.250   1.000  <- tốt hơn
+  long_03            1.000   1.000
+  long_04            1.000   1.000
+  long_05            1.000   1.000
+  => Sửa tốt hơn ở 2 câu, kém hơn ở 1 câu, giữ nguyên 22 câu.
+
+B4. Xem tận mắt top-3 của câu thay đổi nhiều nhất:
+  Câu hỏi [long_02]: 'How are hyperscalers managing depreciation schedules and useful life estimates for AI servers and network equipment?'  | từ cần có: ['depreciation', 'useful life', 'servers', 'network equipment', 'accounting estimate']
+  gốc (IDF):
+    1. [sai ] AMD   Item 1. Business       | [Advanced Micro Devices, Inc. (AMD) | 10-K FY2025 | Section: Item 1. Business] Large multi-nationals and regio
+    2. [sai ] AMD   Item 1. Business       | [Advanced Micro Devices, Inc. (AMD) | 10-K FY2024 | Section: Item 1. Business] Additionally, we have increased
+    3. [sai ] MSFT  Item 1. Business       | [Microsoft Corporation (MSFT) | 10-K FY2024 | Section: Item 1. Business] With Azure's purpose-built, AI-optimi
+  sửa:
+    1. [ĐÚNG] META  Item 8. Financial Stat | [Meta Platforms, Inc. (META) | 10-K FY2025 | Section: Item 8. Financial Statements and Supplementary Data] | |
+    2. [ĐÚNG] AMZN  Full Filing Narrative  | [Amazon.com, Inc. (AMZN) | 10-K FY2025 | Section: Full Filing Narrative] Actual results could differ materiall
+    3. [ĐÚNG] META  Part I - Item 2. Manag | [Meta Platforms, Inc. (META) | 10-Q Q-2025-07 | Section: Part I - Item 2. Management's Discussion and Analysis

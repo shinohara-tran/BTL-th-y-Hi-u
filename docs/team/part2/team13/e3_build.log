@@ -1,0 +1,14 @@
+C:\Users\Admin\AppData\Local\Programs\Python\Python313\Lib\site-packages\qdrant_client\qdrant_remote.py:287: UserWarning: Qdrant client version 1.20.0 is incompatible with server version 1.14.0. Major versions should match and minor version difference must not exceed 1. Set check_compatibility=False to skip version check.
+  show_warning(
+128/13137 points | 0.8 min
+256/13137 points | 1.5 min
+384/13137 points | 2.3 min
+512/13137 points | 3.1 min
+640/13137 points | 4.0 min
+768/13137 points | 4.8 min
+896/13137 points | 5.7 min
+1024/13137 points | 6.4 min
+1152/13137 points | 7.1 min
+1280/13137 points | 7.9 min
+1408/13137 points | 8.7 min
+1536/13137 points | 9.4 min

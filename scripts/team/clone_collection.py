@@ -36,7 +36,7 @@ def main(src: str, dst: str, reembed_dense: bool = False) -> None:
     dense_gen = DenseEmbeddingGenerator(config.embeddings.dense_model) if reembed_dense else None
     manager.create_collection(recreate=True)
 
-    total_src = client.count(src).count
+    total_src = client.count(src, exact=True).count
     offset, copied, started = None, 0, time.time()
     while True:
         points, offset = client.scroll(src, limit=128, offset=offset, with_payload=True, with_vectors=True)
@@ -54,7 +54,7 @@ def main(src: str, dst: str, reembed_dense: bool = False) -> None:
         if offset is None:
             break
 
-    total = client.count(dst).count
+    total = client.count(dst, exact=True).count
     assert total == total_src == copied, (total, total_src, copied)
     print(f"Copied {copied} points: {src} -> {dst} in {(time.time() - started) / 60:.1f} min")
 

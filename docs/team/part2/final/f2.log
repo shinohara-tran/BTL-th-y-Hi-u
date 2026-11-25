@@ -1,0 +1,52 @@
+C:\Users\Admin\AppData\Local\Programs\Python\Python313\Lib\site-packages\qdrant_client\qdrant_remote.py:287: UserWarning: Qdrant client version 1.20.0 is incompatible with server version 1.14.0. Major versions should match and minor version difference must not exceed 1. Set check_compatibility=False to skip version check.
+  show_warning(
+Running benchmark across 25 queries and 5 retrieval configurations...
+
+======================================================================
+    FINANCIAL INTELLIGENCE HYBRID SEARCH BENCHMARK RESULTS            
+======================================================================
+
+                       Overall Retrieval Quality (k=10)                        
++-----------------------------------------------------------------------------+
+|                            |       |       |  BM25 |       | Spar… |        |
+|                            |  BM25 | Dense |     + | Spar… |     + | Neural |
+| Metric                     | (Lex… | (BGE) | Dense | (SPL… | Dense | Rerank |
+|----------------------------+-------+-------+-------+-------+-------+--------|
+| Recall@10                  | 0.92… | 0.84… | 0.92… | 0.88… | 0.88… | 0.8800 |
+| Precision@10               | 0.82… | 0.76… | 0.80… | 0.83… | 0.80… | 0.8280 |
+| Mean Reciprocal Rank (MRR) | 0.89… | 0.80… | 0.86… | 0.86… | 0.85… | 0.8533 |
+| NDCG@10                    | 0.89… | 0.85… | 0.87… | 0.89… | 0.87… | 0.9032 |
+| Hit Rate@10                | 0.92… | 0.84… | 0.92… | 0.88… | 0.88… | 0.8800 |
++-----------------------------------------------------------------------------+
+
+        Query Latency (p50 / p95 / Mean in ms)         
++-----------------------------------------------------+
+| Configuration   |  p50 (ms) |  p95 (ms) | Mean (ms) |
+|-----------------+-----------+-----------+-----------|
+| BM25 (Lexical)  |  24.41 ms |  57.28 ms |  29.43 ms |
+| Dense (BGE)     |  56.85 ms | 112.53 ms |  66.18 ms |
+| BM25 + Dense    |  55.98 ms | 108.75 ms |  60.19 ms |
+| Sparse (SPLADE) | 133.70 ms | 227.74 ms | 152.33 ms |
+| Sparse + Dense  | 162.81 ms | 336.71 ms | 186.88 ms |
+| Neural Rerank   | 234.68 ms | 386.80 ms | 241.75 ms |
++-----------------------------------------------------+
+
+                           NDCG@10 by Query Category                           
++-----------------------------------------------------------------------------+
+|          |     BM25 |    Dense |   BM25 + |   Sparse |  Sparse + |   Neural |
+| Category | (Lexica… |    (BGE) |    Dense | (SPLADE) |     Dense |   Rerank |
+|----------+----------+----------+----------+----------+-----------+----------|
+| Exact    |   0.9841 |   0.9186 |   0.9562 |   0.9767 |    0.9359 |   0.9789 |
+| Termino… |          |          |          |          |           |          |
+| Semantic |   0.5611 |   0.5098 |   0.5464 |   0.5888 |    0.5530 |   0.6169 |
+| Questio… |          |          |          |          |           |          |
+| Mixed    |   0.9745 |   0.9778 |   0.9836 |   0.9934 |    0.9843 |   0.9959 |
+| Queries  |          |          |          |          |           |          |
+| Rare     |   0.9802 |   0.9459 |   0.9471 |   0.9593 |    0.9394 |   0.9616 |
+| Termino… |          |          |          |          |           |          |
+| Long     |   0.9731 |   0.9119 |   0.9600 |   0.9584 |    0.9563 |   0.9627 |
+| Natural  |          |          |          |          |           |          |
+| Language |          |          |          |          |           |          |
++-----------------------------------------------------------------------------+
+
+Report exported to docs\team\part2\final\F2_splade_bo_idf.md

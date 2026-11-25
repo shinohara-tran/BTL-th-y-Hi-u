@@ -3,30 +3,14 @@
 from __future__ import annotations
 
 import math
+import os
 import re
 from threading import Lock
 from typing import Optional
 
 from fastembed.rerank.cross_encoder import TextCrossEncoder
 from hybrid_search.models.search import SearchResult
-from hybrid_search.retrieval.extractor import AnswerExtractor
-
-
-def requested_period(query):
-    years = set(re.findall(r"(?:\bfy\s*|\b)((?:19|20)\d{2})\b", query.lower()))
-    if len(years) != 1:
-        return None
-    q = query.lower().replace("-", " ")
-    quarter = re.search(r"\bq([1-4])\b|\b(first|second|third|fourth) quarter\b", q)
-    annual = re.search(r"\b(fiscal|financial|annual|full year|whole year|year ended|fy\s*\d)", q)
-    if quarter and re.search(r"\b(full year|full fiscal year|annual|year to date|ytd)\b", q):
-        return None
-    if quarter:
-        number = quarter[1] or str(("first", "second", "third", "fourth").index(quarter[2]) + 1)
-        return years.pop(), number
-    if annual and not re.search(r"\b(quarter\w*|months?|ytd|half|year to date)\b", q):
-        return years.pop(), "annual"
-    return None
+from hybrid_search.retrieval.extractor import AnswerExtractor, requested_period
 
 
 def period_conflict(period, result):
@@ -50,6 +34,9 @@ def period_conflict(period, result):
 class NeuralReranker:
     def __init__(self, model_name: str = "BAAI/bge-reranker-base"):
         self.model_name = model_name
+        self.batch_size = int(os.environ.get("HYBRID_RERANK_BATCH_SIZE", "2"))
+        if self.batch_size < 1:
+            raise ValueError("HYBRID_RERANK_BATCH_SIZE must be positive")
         self._model = None
         self._load_lock = Lock()
 
@@ -62,15 +49,28 @@ class NeuralReranker:
         with self._load_lock:
             if self._model is None:
                 self._model = TextCrossEncoder(model_name=self.model_name)
-        scores = self._model.rerank(query, [result.text for result in results], batch_size=2)
+        scores = self._model.rerank(
+            query, [result.text for result in results], batch_size=self.batch_size
+        )
         ranked = sorted(zip(scores, results, strict=True), key=lambda pair: pair[0], reverse=True)
         period = requested_period(query)
-        # Stable partition: keep BGE's order among candidates with the same status.
-        ranked.sort(key=lambda pair: period_conflict(period, pair[1]))
+        # Prefer a verified table column before cutting the displayed results.
+        evidence = {}
+        if AnswerExtractor.table_search_terms(query):
+            evidence = {
+                result.chunk_id: AnswerExtractor.extract(query, result.text)
+                for _, result in ranked
+            }
+        ranked.sort(key=lambda pair: (
+            not (evidence and evidence[pair[1].chunk_id].exact_answer),
+            period_conflict(period, pair[1]),
+        ))
 
         selected = []
         for rank, (score, result) in enumerate(ranked[:top_k or len(results)], start=1):
-            extracted = AnswerExtractor.extract(query, result.text, company=result.company, ticker=result.ticker)
+            extracted = evidence.get(result.chunk_id) or AnswerExtractor.extract(
+                query, result.text, company=result.company, ticker=result.ticker
+            )
             result.rank = rank
             result.score = round(float(score), 4)
             result.retrieval_method = "rerank"

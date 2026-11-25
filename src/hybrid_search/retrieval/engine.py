@@ -16,7 +16,9 @@ from hybrid_search.retrieval.bm25_dense_retriever import BM25DenseRetriever
 from hybrid_search.retrieval.bm25_retriever import BM25Retriever
 from hybrid_search.retrieval.dense_retriever import DenseRetriever
 from hybrid_search.retrieval.extractor import AnswerExtractor
+from hybrid_search.retrieval.query_parser import QueryParser
 from hybrid_search.retrieval.reranker import NeuralReranker
+from hybrid_search.retrieval.smart_hybrid import MODES as SMART_MODES, SmartHybridRetriever
 from hybrid_search.retrieval.sparse_dense_retriever import SparseDenseRetriever
 from hybrid_search.retrieval.sparse_retriever import SparseRetriever
 
@@ -24,7 +26,7 @@ from hybrid_search.retrieval.sparse_retriever import SparseRetriever
 class SearchEngine:
     """Unified engine encapsulating all retrieval configurations on Qdrant with Cross-Encoder Reranking."""
 
-    METHOD_NAMES = ["bm25", "dense", "bm25_dense", "sparse", "sparse_dense", "rerank"]
+    METHOD_NAMES = ["bm25", "dense", "bm25_dense", "sparse", "sparse_dense", "rerank", *SMART_MODES]
 
     def __init__(
         self,
@@ -75,6 +77,20 @@ class SearchEngine:
                 sparse_gen=self.sparse_gen,
             ),
         }
+
+        # Phần 3: three ablation steps of the smart hybrid retriever, sharing the base retrievers above.
+        parser = QueryParser(self.config.companies)
+        for mode in SMART_MODES:
+            self.retrievers[mode] = SmartHybridRetriever(
+                client=self.client,
+                collection_name=self.collection_name,
+                parser=parser,
+                bm25=self.retrievers["bm25"],
+                dense=self.retrievers["dense"],
+                server_hybrid=self.retrievers["bm25_dense"],
+                settings=self.config.retrieval,
+                mode=mode,
+            )
 
     def search(
         self,

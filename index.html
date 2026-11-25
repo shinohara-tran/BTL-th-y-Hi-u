@@ -194,6 +194,9 @@
           <button onclick="selectMethod('sparse_dense')" data-method="sparse_dense" class="method-btn px-4 py-2 rounded-lg text-xs font-bold bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-dark-border text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800 flex items-center space-x-1.5">
             <span>Sparse + Dense (Recall@10: 0.96)</span>
           </button>
+          <button onclick="selectMethod('hybrid_plus')" data-method="hybrid_plus" class="method-btn px-4 py-2 rounded-lg text-xs font-bold bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-dark-border text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800 flex items-center space-x-1.5">
+            <span>Smart Hybrid (Phần 3)</span>
+          </button>
           <button onclick="selectMethod('bm25_dense')" data-method="bm25_dense" class="method-btn px-4 py-2 rounded-lg text-xs font-bold bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-dark-border text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800 flex items-center space-x-1.5">
             <span>BM25 + Dense (Hybrid RRF)</span>
           </button>
@@ -1455,7 +1458,7 @@
       grid.innerHTML = '';
       grid.classList.remove('hidden');
 
-      const methodsOrder = ['bm25', 'dense', 'sparse', 'bm25_dense', 'sparse_dense', 'rerank'];
+      const methodsOrder = ['bm25', 'dense', 'sparse', 'bm25_dense', 'sparse_dense', 'rerank', 'hybrid_plus'];
       const methodLabels = {
         'bm25': { title: 'BM25 (Lexical)', color: 'text-purple-600 dark:text-purple-400', badge: 'IDF Sparse' },
         'dense': { title: 'Dense (BGE-Small)', color: 'text-blue-600 dark:text-blue-400', badge: '384d Cosine' },
@@ -1463,6 +1466,7 @@
         'bm25_dense': { title: 'BM25 + Dense', color: 'text-indigo-600 dark:text-indigo-400', badge: 'Server-Side RRF' },
         'sparse_dense': { title: 'Sparse + Dense', color: 'text-cyan-600 dark:text-cyan-400', badge: 'Recall Winner (0.96)' },
         'rerank': { title: 'Stage-2 Rerank', color: 'text-brand-600 dark:text-brand-400', badge: 'Precision (1.00)' },
+        'hybrid_plus': { title: 'Smart Hybrid', color: 'text-amber-600 dark:text-amber-400', badge: 'Phần 3: hiểu câu hỏi + trọng số + lọc trùng' },
       };
 
       methodsOrder.forEach(mKey => {

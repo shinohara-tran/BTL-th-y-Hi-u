@@ -44,6 +44,11 @@ class RetrievalConfig(BaseModel):
     default_k: int = Field(default=10)
     prefetch_k: int = Field(default=50)
     rrf_constant: int = Field(default=60)
+    # Phần 3 (smart hybrid): BM25 weight by question type; Dense gets 1 - weight. Tune on the dev split.
+    lexical_weight_code: float = Field(default=0.7, ge=0.0, le=1.0)
+    lexical_weight_concept: float = Field(default=0.3, ge=0.0, le=1.0)
+    # Cosine similarity above which a chunk counts as a repeat of a higher-ranked one.
+    dedup_threshold: float = Field(default=0.95, ge=0.0, le=1.0)
 
 
 class BenchmarkConfig(BaseModel):

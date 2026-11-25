@@ -9,6 +9,7 @@ Three methods so each step can be measured on its own (ablation):
 
 from __future__ import annotations
 
+import difflib
 import logging
 from typing import Dict, List, Optional, Sequence
 
@@ -24,6 +25,7 @@ from hybrid_search.retrieval.query_parser import QueryParser
 log = logging.getLogger(__name__)
 
 MODES = ("hybrid_qp", "hybrid_qp_w", "hybrid_plus")
+ANSWER_SIMILARITY = 0.85  # "OpenAI" vs "OpenAI Global, LLC ("OpenAI")" in the same sentence scores 0.89
 
 
 def weighted_rrf(ranked_lists: Sequence[List[SearchResult]], weights: Sequence[float], k: int = 60) -> List[SearchResult]:
@@ -52,14 +54,15 @@ def _answer_key(r: SearchResult) -> str:
 
 def drop_near_duplicates(results: List[SearchResult], vectors: Dict[str, Sequence[float]], threshold: float) -> List[SearchResult]:
     """Greedy: keep a chunk unless its dense vector is >= threshold cosine-similar to one already kept,
-    or it shows the same pinpointed answer sentence as one already kept (a sentence repeated in a 10-K
-    and a 10-Q sits in chunks whose other text differs, so the whole-chunk vectors stay below threshold)."""
+    or its pinpointed answer sentence matches one already kept (a sentence repeated in a 10-K and a 10-Q
+    sits in chunks whose other text differs, so the whole-chunk vectors stay below threshold). Sentences
+    count as the same at >= 0.85 character similarity, so small rewordings across filings still match."""
     kept: List[SearchResult] = []
     kept_vecs: List[np.ndarray] = []
-    seen_answers = set()
+    seen_answers: List[str] = []
     for r in results:
         key = _answer_key(r)
-        if key and key in seen_answers:
+        if key and any(difflib.SequenceMatcher(None, key, s).ratio() >= ANSWER_SIMILARITY for s in seen_answers):
             continue
         v = vectors.get(r.chunk_id)
         if v is not None:  # no vector -> cannot judge by vector, keep it
@@ -70,7 +73,7 @@ def drop_near_duplicates(results: List[SearchResult], vectors: Dict[str, Sequenc
             kept_vecs.append(v)
         kept.append(r)
         if key:
-            seen_answers.add(key)
+            seen_answers.append(key)
     return kept
 
 

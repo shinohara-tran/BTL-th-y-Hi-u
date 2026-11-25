@@ -64,6 +64,11 @@ class AnswerExtractor:
             return ExtractedAnswer("", 0.0, chunk_text)
 
         if terms:
+            fact = cls._extract_normalized_row(query, body)
+            if fact:
+                answer, row = fact
+                highlighted = cls._highlight_in_text(body, row)
+                return ExtractedAnswer(answer, 1.0, f"{header}\n\n{highlighted}".strip(), True)
             if cls.services_sales_year(query):
                 fact = cls._extract_services_sales(query, body)
             elif cls._gross_margin_segment(query):
@@ -126,9 +131,9 @@ class AnswerExtractor:
 
             # Bonus for numerical/percentage facts if query asks for percentage/how many/amounts
             bonus = 0.0
-            if any(q in query.lower() for q in ["how many", "percentage", "revenue", "percent", "%", "total", "spend", "cost"]):
-                if re.search(r"\d+[\.,]?\d*%", cand) or re.search(r"\b\d{1,3}(?:,\d{3})*\b", cand) or "$" in cand or "%" in cand:
-                    bonus += 0.35
+            if any(q in query.lower() for q in ["how many", "percentage", "revenue", "percent", "%", "total", "spend", "cost", "earnings", "per share", "eps", "diluted", "income", "sales"]):
+                if re.search(r"\d+[\.,]?\d*%", cand) or re.search(r"\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b", cand) or "$" in cand or "%" in cand or "=" in cand:
+                    bonus += 0.40
 
             # Substantive content bonus: specific concrete materials, named entities, lists (such as, including)
             if any(term in cand_lower for term in ["such as", "including", "limited number of", "shortages", "unavailability", "silicon wafers", "photoresist", "chemicals", "export licenses"]):
@@ -137,6 +142,10 @@ class AnswerExtractor:
             # Causal risk impact bonus
             if any(term in cand_lower for term in ["unable to obtain", "limited supply", "delivery cycles", "result in", "adversely affect"]):
                 bonus += 0.20
+
+            # Severe penalty for table lead-in sentences ending in colon or procedural table intros without numbers
+            if cand.strip().endswith(":") or re.search(r"\b(the following table|the table below|the following tables|as follows:?)\b", cand_lower):
+                bonus -= 0.60
 
             # Penalty for generic procedural transition sentences / platitudes
             if re.match(r"^(?:to better manage|we evaluate and project|we have also implemented|in order to|we believe that|we continue to)", cand_lower):
@@ -162,6 +171,91 @@ class AnswerExtractor:
             highlighted_text=full_highlighted,
             is_table_row=is_table,
         )
+
+    @classmethod
+    def _extract_normalized_row(cls, query: str, body: str) -> Optional[Tuple[str, str]]:
+        """Use the label, column and unit carried by a Part 1 table row."""
+        period = requested_period(query)
+        year = cls.services_sales_year(query) or (period[0] if period else None)
+        if year is None:
+            return None
+        segment = cls._gross_margin_segment(query)
+        variant = cls._eps_variant(query)
+        context = ""
+        for row in body.splitlines():
+            if row.startswith("Table context:"):
+                context = row.lower()
+                continue
+            match = re.fullmatch(r"(.+):\s+(.+?)\.\s+Unit:\s+(.+?)\.?", row)
+            if not match:
+                if row.strip():
+                    context = ""
+                continue
+            label, pairs, unit = match.groups()
+            metric = label.lower().partition(" (")[0].strip()
+            quarterly = bool(period and period[1] != "annual")
+            if segment:
+                if metric not in {
+                    f"{segment.lower()} gross margin percentage",
+                    f"{segment.lower()} gross margin",
+                    f"gross margin percentage {segment.lower()}",
+                } or unit.lower() not in {"%", "percent", "percentage"}:
+                    continue
+                title = f"{segment} gross margin percentage"
+                if quarterly and not re.search(
+                    rf"\bQ{period[1]}\s+(?:FY\s*)?{year}\b", body, re.I
+                ):
+                    continue
+                suffix = "%"
+            elif cls.services_sales_year(query):
+                if metric not in {"services net sales", "services revenue"} and not (
+                    metric == "services" and re.search(r"\b(?:net sales|revenue) by category\b", context)
+                ):
+                    continue
+                title = "Services net sales"
+                suffix = ""
+            elif variant:
+                if not re.fullmatch(
+                    rf"{variant} (?:earnings|(?:net )?income) per (?:common )?share|net income:\s*{variant}", metric
+                ) or unit.lower() != "usd per share":
+                    continue
+                title = f"{variant.capitalize()} earnings per share"
+                suffix = " per share"
+            else:
+                if metric not in {"revenue", "total revenue"} or (
+                    metric == "revenue" and not (
+                        re.search(r"\(note \d+\)", label, re.I)
+                        or "consolidated" in context
+                    )
+                ):
+                    continue
+                title = "Total revenue"
+                suffix = ""
+
+            if not segment and not variant:
+                scale = re.fullmatch(r"(thousand|million|billion)s? of usd", unit, re.I)
+                if not scale:
+                    continue
+                suffix = f" {scale[1].lower()}"
+            selected = []
+            for pair in pairs.split(";"):
+                column, separator, value = pair.strip().partition(" = ")
+                if not separator or not re.search(rf"\b{year}\b", column):
+                    continue
+                interim = re.search(r"\b(?:three|six|nine|3|6|9) months? ended\b", column, re.I)
+                if quarterly:
+                    if not interim or not re.match(r"(?:three|3)\b", interim[0], re.I):
+                        continue
+                elif interim or re.search(r"\b(?:three|six|nine|3|6|9) months? ended\b", label, re.I):
+                    continue
+                number = re.fullmatch(r"\$?\s*(\d[\d,]*(?:\.\d+)?)\s*%?", value)
+                if number:
+                    selected.append(number[1])
+            if len(selected) == 1:
+                display_period = f"Q{period[1]} FY{year}" if quarterly else f"FY{year}"
+                value = selected[0] if segment else "$" + selected[0]
+                return f"{title} - {display_period}: {value}{suffix}", row
+        return None
 
     @classmethod
     def table_search_terms(cls, query: str) -> str:
@@ -399,6 +493,10 @@ class AnswerExtractor:
     ) -> float:
         """Heuristic evidence coverage, not a calibrated correctness probability."""
         q, a = query.lower(), answer.lower()
+        if answer.strip().endswith(":") or re.search(
+            r"\b(the following table|the table below|the following tables)\b", a
+        ):
+            return 0.0
         words = set(re.findall(r"[a-z]+", q)) - cls.STOP_WORDS
         evidence = set(re.findall(r"[a-z]+", a + " " + header.lower()))
         score = len(words & evidence) / max(1, len(words))
@@ -586,12 +684,11 @@ class AnswerExtractor:
             if not clean_line or len(clean_line) < 15:
                 continue
 
-            # Check if this line is genuinely a tabular row (multiple short cells) vs narrative text
+            # Check if this line is genuinely a tabular row (multiple short cells or row-to-text with =)
             cells = [c.strip() for c in clean_line.split("|") if c.strip()]
             is_true_table = (
-                len(cells) >= 3 and
-                all(len(c) < 70 for c in cells) and
-                any(re.search(r"\d", c) for c in cells)
+                (len(cells) >= 3 and all(len(c) < 70 for c in cells) and any(re.search(r"\d", c) for c in cells))
+                or (("=" in clean_line or ";" in clean_line) and any(y in clean_line for y in ["2022", "2023", "2024", "2025", "Years ended", "Months Ended"]) and any(c in clean_line for c in ["$", "%", "USD", "shares"]))
             )
 
             if is_true_table:

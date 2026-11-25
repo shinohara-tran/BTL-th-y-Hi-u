@@ -6,8 +6,8 @@ edgar:
   cache_dir: "data/raw/edgar"
 
 chunking:
-  chunk_size_tokens: 500
-  chunk_overlap_tokens: 100
+  chunk_size_tokens: 480
+  chunk_overlap_tokens: 80
 
 embeddings:
   dense_model: "BAAI/bge-small-en-v1.5"
@@ -21,7 +21,7 @@ qdrant:
   api_key: null                        # For Qdrant Cloud: "your-api-key-here" (or set QDRANT_API_KEY env var)
   local_path: "qdrant_data"
   prefer_local_embedded: false
-  collection_name: "team_docs"        # tách khỏi collection gốc "financial_docs" của repo upstream
+  collection_name: "team_docs_p1"
   dense_vector_size: 384
   upsert_batch_size: 100
 

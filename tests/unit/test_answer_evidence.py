@@ -142,3 +142,31 @@ def test_vfs_deliveries_require_vehicle_recipient_and_date():
     )
     assert AnswerExtractor.extract(query, body.replace("GSM", "Green Future")).confidence == 0
     assert AnswerExtractor.extract(query, body.replace("2024", "2023")).confidence == 0
+
+def test_normalized_rows_keep_explicit_period_and_table_unit():
+    annual = "Services net sales: 2024 = 96,169; 2023 = 85,200. Unit: millions of USD."
+    assert AnswerExtractor.extract("What was Apple's Services net sales in fiscal 2024?", annual).exact_answer == (
+        "Services net sales - FY2024: $96,169 million"
+    )
+    assert not AnswerExtractor.extract(
+        "What was Apple's Services net sales in fiscal 2024?",
+        annual.replace("millions of USD", "unknown unit"),
+    ).exact_answer
+
+    quarter = (
+        "Q3 2025 Form 10-Q\n"
+        "Products gross margin: Three Months Ended June 28, 2025 = 22,993. Unit: millions of USD.\n"
+        "Products gross margin percentage: Three Months Ended June 28, 2025 = 34.5%; "
+        "Nine Months Ended June 28, 2025 = 36.9%. Unit: %."
+    )
+    assert AnswerExtractor.extract(
+        "What was Apple's Products gross margin percentage in Q3 FY2025?", quarter
+    ).exact_answer == "Products gross margin percentage - Q3 FY2025: 34.5%"
+    assert not AnswerExtractor.extract(
+        "What was Apple's Products gross margin percentage in full fiscal year 2025?", quarter
+    ).exact_answer
+
+    eps = "Net income: Basic: 2024 = $19.79; 2023 = $16.25. Unit: USD per share."
+    assert AnswerExtractor.extract(
+        "What was JPMorgan's basic EPS in fiscal 2024?", eps
+    ).exact_answer == "Basic earnings per share - FY2024: $19.79 per share"

@@ -70,6 +70,7 @@ class BaseRetriever(ABC):
                     document_type=str(payload.get("document_type", "")),
                     filing_date=str(payload.get("filing_date", "")),
                     fiscal_period=str(payload.get("fiscal_period", "")),
+                    fact_years=list(payload.get("fact_years", [])),
                     section=str(payload.get("section", "")),
                     sector=str(payload.get("sector", "Unknown")),
                     geography=str(payload.get("geography", "US")),

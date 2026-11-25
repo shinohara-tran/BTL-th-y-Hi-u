@@ -127,6 +127,18 @@ def test_drop_repeated_answer_sentence():
     assert [r.chunk_id for r in drop_near_duplicates(rs, vecs, 0.95)] == ["10k", "other", "short1", "short2"]
 
 
+def test_drop_reworded_answer_sentence():
+    rs = [res("10k"), res("10q"), res("rule"), res("law")]
+    rs[0].exact_answer = "Microsoft and OpenAI maintain a long-term strategic partnership originally established in 2019."
+    rs[1].exact_answer = ('Microsoft and OpenAI Global, LLC ("OpenAI") maintain a long-term strategic partnership '
+                          "originally established in 2019.")
+    rs[2].exact_answer = ("The potential replacement of the recently rescinded AI Diffusion Rule and other potential "
+                          "AI-related rulemakings could adversely affect Microsoft's business.")
+    rs[3].exact_answer = ("Governments are actively enforcing competition laws and regulations and enacting new "
+                          "regulations to intervene in digital markets.")
+    assert [r.chunk_id for r in drop_near_duplicates(rs, {}, 0.95)] == ["10k", "rule", "law"]
+
+
 class StubRetriever:
     def __init__(self, ids):
         self.ids, self.calls = ids, []

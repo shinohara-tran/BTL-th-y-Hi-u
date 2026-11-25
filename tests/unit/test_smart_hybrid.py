@@ -116,6 +116,29 @@ def test_drop_near_duplicates():
     assert [r.chunk_id for r in drop_near_duplicates(rs, vecs, 0.95)] == ["a", "c", "d"]
 
 
+def test_drop_repeated_answer_sentence():
+    sentence = "We maintain a long-term strategic partnership with OpenAI originally established in 2019."
+    rs = [res("10k"), res("10q"), res("other"), res("short1"), res("short2")]
+    rs[0].exact_answer = sentence
+    rs[1].exact_answer = "  " + sentence.upper() + " "  # same sentence, different chunk around it
+    rs[2].exact_answer = "Competition in cloud services could reduce our margins and revenue growth."
+    rs[3].exact_answer = rs[4].exact_answer = "Revenue grew."  # too short to judge
+    vecs = {"10k": [1, 0], "10q": [0, 1], "other": [0.7, 0.7]}  # vectors alone would keep all
+    assert [r.chunk_id for r in drop_near_duplicates(rs, vecs, 0.95)] == ["10k", "other", "short1", "short2"]
+
+
+def test_drop_reworded_answer_sentence():
+    rs = [res("10k"), res("10q"), res("rule"), res("law")]
+    rs[0].exact_answer = "Microsoft and OpenAI maintain a long-term strategic partnership originally established in 2019."
+    rs[1].exact_answer = ('Microsoft and OpenAI Global, LLC ("OpenAI") maintain a long-term strategic partnership '
+                          "originally established in 2019.")
+    rs[2].exact_answer = ("The potential replacement of the recently rescinded AI Diffusion Rule and other potential "
+                          "AI-related rulemakings could adversely affect Microsoft's business.")
+    rs[3].exact_answer = ("Governments are actively enforcing competition laws and regulations and enacting new "
+                          "regulations to intervene in digital markets.")
+    assert [r.chunk_id for r in drop_near_duplicates(rs, {}, 0.95)] == ["10k", "rule", "law"]
+
+
 class StubRetriever:
     def __init__(self, ids):
         self.ids, self.calls = ids, []

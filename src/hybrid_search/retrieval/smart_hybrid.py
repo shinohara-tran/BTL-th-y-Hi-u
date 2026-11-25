@@ -9,6 +9,7 @@ Three methods so each step can be measured on its own (ablation):
 
 from __future__ import annotations
 
+import difflib
 import logging
 from typing import Dict, List, Optional, Sequence
 
@@ -24,6 +25,7 @@ from hybrid_search.retrieval.query_parser import QueryParser
 log = logging.getLogger(__name__)
 
 MODES = ("hybrid_qp", "hybrid_qp_w", "hybrid_plus")
+ANSWER_SIMILARITY = 0.85  # "OpenAI" vs "OpenAI Global, LLC ("OpenAI")" in the same sentence scores 0.89
 
 
 def weighted_rrf(ranked_lists: Sequence[List[SearchResult]], weights: Sequence[float], k: int = 60) -> List[SearchResult]:
@@ -44,21 +46,34 @@ def weighted_rrf(ranked_lists: Sequence[List[SearchResult]], weights: Sequence[f
     return out
 
 
+def _answer_key(r: SearchResult) -> str:
+    """Normalized pinpointed answer; short answers are too generic to call two chunks repeats."""
+    key = " ".join(r.exact_answer.lower().split())
+    return key if len(key) >= 40 else ""
+
+
 def drop_near_duplicates(results: List[SearchResult], vectors: Dict[str, Sequence[float]], threshold: float) -> List[SearchResult]:
-    """Greedy: keep a chunk unless its dense vector is >= threshold cosine-similar to one already kept."""
+    """Greedy: keep a chunk unless its dense vector is >= threshold cosine-similar to one already kept,
+    or its pinpointed answer sentence matches one already kept (a sentence repeated in a 10-K and a 10-Q
+    sits in chunks whose other text differs, so the whole-chunk vectors stay below threshold). Sentences
+    count as the same at >= 0.85 character similarity, so small rewordings across filings still match."""
     kept: List[SearchResult] = []
     kept_vecs: List[np.ndarray] = []
+    seen_answers: List[str] = []
     for r in results:
+        key = _answer_key(r)
+        if key and any(difflib.SequenceMatcher(None, key, s).ratio() >= ANSWER_SIMILARITY for s in seen_answers):
+            continue
         v = vectors.get(r.chunk_id)
-        if v is None:
-            kept.append(r)  # no vector -> cannot judge, keep it
-            continue
-        v = np.asarray(v, dtype=np.float32)
-        v = v / (np.linalg.norm(v) or 1.0)
-        if any(float(v @ kv) >= threshold for kv in kept_vecs):
-            continue
+        if v is not None:  # no vector -> cannot judge by vector, keep it
+            v = np.asarray(v, dtype=np.float32)
+            v = v / (np.linalg.norm(v) or 1.0)
+            if any(float(v @ kv) >= threshold for kv in kept_vecs):
+                continue
+            kept_vecs.append(v)
         kept.append(r)
-        kept_vecs.append(v)
+        if key:
+            seen_answers.append(key)
     return kept
 
 

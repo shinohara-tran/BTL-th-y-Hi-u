@@ -21,7 +21,7 @@ qdrant:
   api_key: null                        # For Qdrant Cloud: "your-api-key-here" (or set QDRANT_API_KEY env var)
   local_path: "qdrant_data"
   prefer_local_embedded: false
-  collection_name: "team_docs_p1"
+  collection_name: "team_docs_p1"     # collection riêng cho Phần 1 (tách khỏi team_docs chung)
   dense_vector_size: 384
   upsert_batch_size: 100
 
@@ -29,6 +29,10 @@ retrieval:
   default_k: 10
   prefetch_k: 50
   rrf_constant: 60
+  # Phần 3: trọng số BM25 theo loại câu hỏi (Dense = 1 - trọng số). Chỉnh trên tập dev.
+  lexical_weight_code: 0.7      # câu có mã: ASC 606, MI300, CET1...
+  lexical_weight_concept: 0.5   # câu dài, hỏi theo ý
+  dedup_threshold: 0.95         # cosine >= ngưỡng này thì coi là đoạn lặp
 
 benchmark:
   num_latency_runs: 5

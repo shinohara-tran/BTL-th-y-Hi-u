@@ -1,0 +1,13 @@
+C:\Users\Admin\AppData\Local\Programs\Python\Python313\Lib\site-packages\qdrant_client\qdrant_remote.py:287: UserWarning: Qdrant client version 1.20.0 is incompatible with server version 1.14.0. Major versions should match and minor version difference must not exceed 1. Set check_compatibility=False to skip version check.
+  show_warning(
+Traceback (most recent call last):
+  File "D:\PTTC\BTL-nhom3\scripts\team\evaluate.py", line 148, in <module>
+    main()
+    ~~~~^^
+  File "D:\PTTC\BTL-nhom3\scripts\team\evaluate.py", line 143, in main
+    print(to_markdown(result))
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ebf' in position 3: character maps to <undefined>

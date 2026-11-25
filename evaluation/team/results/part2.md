@@ -1,0 +1,36 @@
+# Kết quả: part2
+
+- **timestamp**: 2026-11-25T22:46:34
+- **git_commit**: e062136-dirty
+- **split**: all
+- **n_queries**: 24
+- **n_points**: 14022
+- **dense_model**: BAAI/bge-small-en-v1.5
+- **sparse_model**: prithivida/Splade_PP_en_v1
+- **bm25_model**: Qdrant/bm25
+- **collection**: team_docs_final
+- **machine**: Windows AMD64, Python 3.13.2
+
+## Tổng hợp
+
+| Method | mrr | ndcg@10 | recall@10 | p@10 | company@5 | dup@5 | unjudged@10 | p50 ms | p95 ms |
+|---|---|---|---|---|---|---|---|---|---|
+| bm25 | - | - | - | - | 0.817 | 0.075 | - | 28.7 | 33.7 |
+| dense | - | - | - | - | 0.800 | 0.050 | - | 19.3 | 29.4 |
+| bm25_dense | - | - | - | - | 0.826 | 0.033 | - | 20.8 | 33.0 |
+| sparse | - | - | - | - | 0.861 | 0.033 | - | 35.0 | 54.7 |
+| sparse_dense | - | - | - | - | 0.861 | 0.017 | - | 170.8 | 254.3 |
+| rerank | - | - | - | - | 0.870 | 0.050 | - | 190.3 | 296.1 |
+
+## Theo nhóm câu hỏi (NDCG@10)
+
+| Method | company | exact_code | hybrid | long | numeric_year | rare_term | semantic |
+|---|---|---|---|---|---|---|---|
+| bm25 | - | - | - | - | - | - | - |
+| dense | - | - | - | - | - | - | - |
+| bm25_dense | - | - | - | - | - | - | - |
+| sparse | - | - | - | - | - | - | - |
+| sparse_dense | - | - | - | - | - | - | - |
+| rerank | - | - | - | - | - | - | - |
+
+Ghi chú: unjudged@10 cao (trên 0,2) nghĩa là cấu hình này tìm ra nhiều chunk chưa ai chấm. Chạy lại pool.py, chấm thêm, rồi chạy lại evaluate.py.

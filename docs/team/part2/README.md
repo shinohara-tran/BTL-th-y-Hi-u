@@ -10,6 +10,12 @@ Các sửa đổi code nằm ở 3 commit trên nhánh `part-2`:
 
 Xem diff: `git log -p main..part-2 -- src scripts`
 
-**Lưu ý:** E0–E3 chạy trên bộ dữ liệu của repo gốc (47 báo cáo, 10 công ty, 8.670 chunk), bằng benchmark gốc (`cli benchmark`, chấm theo từ khóa), chế độ Qdrant embedded. Chưa chạy lại trên bộ 13 công ty `team_docs` và chưa chấm bằng `scripts/team/evaluate.py`.
+**Số liệu chính để đưa vào báo cáo chung: `final/KET_QUA.md`.** Phần này đo trên bộ dữ liệu cuối `team_docs_final` (14.022 chunk, 13 công ty, Qdrant chạy trong Docker), gồm các cấu hình F0–F3 và kết quả `evaluate.py --tag part2`.
 
-Bắt đầu đọc từ `00_MUC_LUC.md`.
+Các thư mục khác:
+
+| Thư mục | Dữ liệu | Ghi chú |
+|---|---|---|
+| `final/` | `team_docs_final`, 14.022 chunk | **Bản chính** |
+| `team13/` | `team_docs` bản densefix, 13.137 chunk | E0–E2, cộng phép đo trên bản `team13-fy` có vector Dense bằng 0 |
+| `00_MUC_LUC.md`, `1_bao_cao/`, `2_log/` | Repo gốc, 10 công ty, 8.670 chunk, Qdrant embedded | E0–E3 làm lần đầu. Không so sánh được với số của cả nhóm |

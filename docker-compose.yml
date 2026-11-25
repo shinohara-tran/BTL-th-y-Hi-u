@@ -6,7 +6,11 @@ services:
       - "6333:6333"
       - "6334:6334"
     volumes:
-      - ./qdrant_storage:/qdrant/storage:z
+      - qdrant_vol:/qdrant/storage
     environment:
       - QDRANT__LOG_LEVEL=INFO
     restart: unless-stopped
+
+volumes:
+  qdrant_vol:
+    external: true

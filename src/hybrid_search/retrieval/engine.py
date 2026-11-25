@@ -15,6 +15,7 @@ from hybrid_search.retrieval.base import BaseRetriever
 from hybrid_search.retrieval.bm25_dense_retriever import BM25DenseRetriever
 from hybrid_search.retrieval.bm25_retriever import BM25Retriever
 from hybrid_search.retrieval.dense_retriever import DenseRetriever
+from hybrid_search.retrieval.extractor import AnswerExtractor
 from hybrid_search.retrieval.reranker import NeuralReranker
 from hybrid_search.retrieval.sparse_dense_retriever import SparseDenseRetriever
 from hybrid_search.retrieval.sparse_retriever import SparseRetriever
@@ -92,6 +93,23 @@ class SearchEngine:
                 filters=filters,
                 prefetch_k=prefetch_k,
             )
+            table_terms = AnswerExtractor.table_search_terms(query)
+            if table_terms and not any(
+                AnswerExtractor.extract(query, result.text).exact_answer
+                for result in base_candidates
+            ):
+                # The general search may retrieve the row without the preceding year headers.
+                table_candidates = self.retrievers["bm25"].search(
+                    query=f"{query} {table_terms}",
+                    k=20,
+                    filters=filters,
+                )
+                existing = {result.chunk_id for result in base_candidates}
+                base_candidates.extend(
+                    result for result in table_candidates
+                    if result.chunk_id not in existing
+                    and AnswerExtractor.extract(query, result.text).exact_answer
+                )
             # Rerank candidates with Cross-Feature Neural Scoring
             return self.reranker.rerank(query=query, results=base_candidates, top_k=k)
 

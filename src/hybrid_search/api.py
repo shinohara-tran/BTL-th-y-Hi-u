@@ -178,7 +178,7 @@ def create_app(engine: Optional[SearchEngine] = None) -> FastAPI:
                     confidence = r.answer_confidence
 
                     if not extracted_answer:
-                        ext = AnswerExtractor.extract(req.query, chunk_text)
+                        ext = AnswerExtractor.extract(req.query, chunk_text, company=r.company, ticker=r.ticker)
                         extracted_answer = ext.exact_answer
                         highlighted_text = ext.highlighted_text
                         confidence = ext.confidence
@@ -224,12 +224,12 @@ def create_app(engine: Optional[SearchEngine] = None) -> FastAPI:
             confidence = r.answer_confidence
 
             if not extracted_answer:
-                ext = AnswerExtractor.extract(req.query, chunk_text)
+                ext = AnswerExtractor.extract(req.query, chunk_text, company=r.company, ticker=r.ticker)
                 extracted_answer = ext.exact_answer
                 highlighted_text = ext.highlighted_text
                 confidence = ext.confidence
 
-            if idx == 0:
+            if top_extracted is None and extracted_answer and confidence >= 0.3:
                 top_extracted = {
                     "exact_answer": extracted_answer,
                     "confidence": confidence,

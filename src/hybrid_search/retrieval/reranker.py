@@ -1,145 +1,82 @@
-"""Neural & cross-feature reranking module for precision financial retrieval."""
+"""Stage-2 ranking of financial filing excerpts with a FastEmbed cross-encoder."""
 
 from __future__ import annotations
 
+import math
+import os
 import re
-from typing import List, Optional
+from threading import Lock
+from typing import Optional
+
+from fastembed.rerank.cross_encoder import TextCrossEncoder
 from hybrid_search.models.search import SearchResult
-from hybrid_search.retrieval.extractor import AnswerExtractor
+from hybrid_search.retrieval.extractor import AnswerExtractor, requested_period
+
+
+def period_conflict(period, result):
+    if period is None:
+        return False
+    year, kind = period
+    # The contextual prefix describes the filing, not the columns in this table.
+    body = re.sub(r"^\s*\[[^\]]*\]\s*", "", result.text).lower()
+    months = re.search(r"\b(?:three|six|nine|3|6|9)[ -]+months?\b", body)
+    annual_columns = re.search(r"\b(years? ended|full fiscal year|twelve months|12 months)\b", body)
+    if kind == "annual":
+        if annual_columns:
+            return False
+        return bool(months or result.document_type == "10-Q")
+    quarter_label = re.search(r"\bq([1-4])\s+(?:fy\s*)?(20\d{2})\s+form\s+10-q", body)
+    if quarter_label:
+        return (quarter_label[1], quarter_label[2]) != (kind, year)
+    return result.document_type in {"10-K", "20-F"} and not (months or "quarter" in body)
 
 
 class NeuralReranker:
-    """Reranks candidate search results using cross-feature query alignment and extractive precision."""
-
-    def __init__(self, model_name: str = "colbert-ir/colbertv2.0"):
+    def __init__(self, model_name: str = "BAAI/bge-reranker-base"):
         self.model_name = model_name
+        self.batch_size = int(os.environ.get("HYBRID_RERANK_BATCH_SIZE", "2"))
+        if self.batch_size < 1:
+            raise ValueError("HYBRID_RERANK_BATCH_SIZE must be positive")
+        self._model = None
+        self._load_lock = Lock()
 
     def rerank(
-        self,
-        query: str,
-        results: List[SearchResult],
-        top_k: Optional[int] = None,
-    ) -> List[SearchResult]:
-        """Reranks a list of SearchResults using joint query-document cross-scoring."""
+        self, query: str, results: list[SearchResult], top_k: Optional[int] = None
+    ) -> list[SearchResult]:
         if not results:
             return []
 
-        query_tokens = [w.lower() for w in re.findall(r"\w+", query)]
-        key_tokens = set(
-            w for w in query_tokens
-            if w not in AnswerExtractor.STOP_WORDS and len(w) > 1
+        with self._load_lock:
+            if self._model is None:
+                self._model = TextCrossEncoder(model_name=self.model_name)
+        scores = self._model.rerank(
+            query, [result.text for result in results], batch_size=self.batch_size
         )
-        generic_words = {"fiscal", "year", "revenue", "sales", "total", "annual", "quarter", "income", "segment", "net"}
-        entity_tokens = set(w for w in key_tokens if w not in generic_words)
+        ranked = sorted(zip(scores, results, strict=True), key=lambda pair: pair[0], reverse=True)
+        period = requested_period(query)
+        # Prefer a verified table column before cutting the displayed results.
+        evidence = {}
+        if AnswerExtractor.table_search_terms(query):
+            evidence = {
+                result.chunk_id: AnswerExtractor.extract(query, result.text)
+                for _, result in ranked
+            }
+        ranked.sort(key=lambda pair: (
+            not (evidence and evidence[pair[1].chunk_id].exact_answer),
+            period_conflict(period, pair[1]),
+        ))
 
-        # Automatic Query Intent Classification (Annual vs Quarterly)
-        q_lower = query.lower()
-        annual_keywords = ["fiscal year", "annual", "full year", "whole year", "for the year", "10-k", "20-f"]
-        is_annual_query = any(k in q_lower for k in annual_keywords) or bool(re.search(r"\bfy\s*202[0-9]\b", q_lower))
-        is_quarterly_query = any(k in q_lower for k in ["quarter", "q1", "q2", "q3", "q4", "three months", "nine months", "10-q", "first quarter", "second quarter", "third quarter", "fourth quarter"])
-        year_matches = re.findall(r"\b(202[0-9])\b", query)
-        target_year = year_matches[0] if year_matches else None
-
-        # Default full-year revenue / metric questions to Annual 10-K if not quarterly
-        if not is_quarterly_query and target_year and any(m in q_lower for m in ["revenue", "sales", "net income", "total", "profit", "r&d", "employees", "segment"]):
-            is_annual_query = True
-
-        scored_results = []
-        for rank_idx, result in enumerate(results):
-            # 1. Extract the best answering sentence/row
-            extracted = AnswerExtractor.extract(query, result.text)
+        selected = []
+        for rank, (score, result) in enumerate(ranked[:top_k or len(results)], start=1):
+            extracted = evidence.get(result.chunk_id) or AnswerExtractor.extract(
+                query, result.text, company=result.company, ticker=result.ticker
+            )
+            result.rank = rank
+            result.score = round(float(score), 4)
+            result.retrieval_method = "rerank"
             result.exact_answer = extracted.exact_answer
             result.highlighted_text = extracted.highlighted_text
-            result.answer_confidence = extracted.confidence
-
-            # 2. Compute Cross-Feature Score
-            text_tokens = set(re.findall(r"\w+", result.text.lower()))
-            ans_tokens = set(re.findall(r"\w+", extracted.exact_answer.lower()))
-
-            # Entity-weighted answer coverage
-            if entity_tokens:
-                entity_ans_match = len(entity_tokens.intersection(ans_tokens)) / len(entity_tokens)
-                entity_text_match = len(entity_tokens.intersection(text_tokens)) / len(entity_tokens)
-            else:
-                entity_ans_match = 0.0
-                entity_text_match = 0.0
-
-            gen_ans_match = len(key_tokens.intersection(ans_tokens)) / (len(key_tokens) + 1e-5)
-            gen_text_match = len(key_tokens.intersection(text_tokens)) / (len(key_tokens) + 1e-5)
-
-            ans_coverage = 0.70 * entity_ans_match + 0.30 * gen_ans_match
-            coverage = 0.70 * entity_text_match + 0.30 * gen_text_match
-
-            # Numerical/Metric Alignment Bonus
-            metric_bonus = 0.0
-            if any(q in q_lower for q in ["how many", "percentage", "%", "revenue", "percent", "top", "500", "sales", "income"]):
-                if re.search(r"\d+[\.,]?\d*%", extracted.exact_answer) or re.search(r"\b\d{1,3}(?:,\d{3})*\b", extracted.exact_answer) or "$" in extracted.exact_answer:
-                    metric_bonus += 0.25
-
-            # Table Fact Bonus - strong boost if exact aligned row was extracted
-            table_bonus = 0.35 if (extracted.is_table_row and "->" in extracted.exact_answer) else (0.15 if extracted.is_table_row else 0.0)
-
-            # Intent & Granularity Scoring
-            intent_score = 0.0
-            if is_annual_query:
-                if result.document_type in ["10-K", "20-F"]:
-                    intent_score += 0.30
-                    if target_year and target_year in result.fiscal_period:
-                        intent_score += 0.35
-                    if target_year and target_year in extracted.exact_answer:
-                        intent_score += 0.15
-                elif result.document_type == "10-Q":
-                    intent_score -= 0.45  # Decisive penalty for quarterly filing answering full-year query
-            elif is_quarterly_query:
-                if result.document_type == "10-Q":
-                    intent_score += 0.30
-                    if target_year and target_year in result.fiscal_period:
-                        intent_score += 0.25
-                elif result.document_type in ["10-K", "20-F"]:
-                    intent_score -= 0.35
-            else:
-                # General query (no specific timeframe): prefer latest annual 10-K for comprehensive policy/accounting definition
-                if result.document_type in ["10-K", "20-F"]:
-                    intent_score += 0.15
-
-            # Recency / Freshness Bonus (Latest filings take precedence when no older year requested)
-            recency_bonus = 0.0
-            if not target_year:
-                period_years = re.findall(r"\b(202[0-9])\b", f"{result.fiscal_period} {result.filing_date}")
-                if period_years:
-                    latest_yr = max(int(y) for y in period_years)
-                    recency_bonus = 0.10 * max(0, min(1.0, (latest_yr - 2022) / 3.0))
-
-            # Original retrieval score normalized
-            base_score = float(result.score)
-            if base_score > 1.0:
-                base_score = base_score / (base_score + 50.0)  # Normalize BM25/SPLADE scores into [0, 1]
-
-            # Composite Precision Score
-            cross_score = (
-                0.15 * base_score +
-                0.25 * ans_coverage +
-                0.10 * coverage +
-                0.15 * metric_bonus +
-                0.10 * table_bonus +
-                0.15 * intent_score +
-                0.10 * recency_bonus
-            )
-
-            scored_results.append((cross_score, result))
-
-
-
-
-        # Sort descending by composite cross-score
-        scored_results.sort(key=lambda x: x[0], reverse=True)
-
-        k = top_k or len(results)
-        final_results: List[SearchResult] = []
-        for new_rank, (new_score, res) in enumerate(scored_results[:k], start=1):
-            res.rank = new_rank
-            res.score = round(new_score, 4)
-            res.retrieval_method = "rerank"
-            final_results.append(res)
-
-        return final_results
+            probability = 1 / (1 + math.exp(-max(-60, min(60, float(score)))))
+            result.answer_confidence = round(extracted.confidence * probability, 4)
+            selected.append(result)
+        return selected

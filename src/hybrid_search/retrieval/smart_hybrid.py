@@ -44,21 +44,33 @@ def weighted_rrf(ranked_lists: Sequence[List[SearchResult]], weights: Sequence[f
     return out
 
 
+def _answer_key(r: SearchResult) -> str:
+    """Normalized pinpointed answer; short answers are too generic to call two chunks repeats."""
+    key = " ".join(r.exact_answer.lower().split())
+    return key if len(key) >= 40 else ""
+
+
 def drop_near_duplicates(results: List[SearchResult], vectors: Dict[str, Sequence[float]], threshold: float) -> List[SearchResult]:
-    """Greedy: keep a chunk unless its dense vector is >= threshold cosine-similar to one already kept."""
+    """Greedy: keep a chunk unless its dense vector is >= threshold cosine-similar to one already kept,
+    or it shows the same pinpointed answer sentence as one already kept (a sentence repeated in a 10-K
+    and a 10-Q sits in chunks whose other text differs, so the whole-chunk vectors stay below threshold)."""
     kept: List[SearchResult] = []
     kept_vecs: List[np.ndarray] = []
+    seen_answers = set()
     for r in results:
+        key = _answer_key(r)
+        if key and key in seen_answers:
+            continue
         v = vectors.get(r.chunk_id)
-        if v is None:
-            kept.append(r)  # no vector -> cannot judge, keep it
-            continue
-        v = np.asarray(v, dtype=np.float32)
-        v = v / (np.linalg.norm(v) or 1.0)
-        if any(float(v @ kv) >= threshold for kv in kept_vecs):
-            continue
+        if v is not None:  # no vector -> cannot judge by vector, keep it
+            v = np.asarray(v, dtype=np.float32)
+            v = v / (np.linalg.norm(v) or 1.0)
+            if any(float(v @ kv) >= threshold for kv in kept_vecs):
+                continue
+            kept_vecs.append(v)
         kept.append(r)
-        kept_vecs.append(v)
+        if key:
+            seen_answers.add(key)
     return kept
 
 

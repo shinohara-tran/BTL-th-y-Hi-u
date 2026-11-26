@@ -178,7 +178,7 @@ def create_app(engine: Optional[SearchEngine] = None) -> FastAPI:
                     confidence = r.answer_confidence
 
                     if not extracted_answer:
-                        ext = AnswerExtractor.extract(req.query, chunk_text)
+                        ext = AnswerExtractor.extract(req.query, chunk_text, company=r.company, ticker=r.ticker)
                         extracted_answer = ext.exact_answer
                         highlighted_text = ext.highlighted_text
                         confidence = ext.confidence
@@ -190,11 +190,13 @@ def create_app(engine: Optional[SearchEngine] = None) -> FastAPI:
                         "company_name": r.company,
                         "form_type": r.document_type,
                         "fiscal_year": r.fiscal_period,
+                        "fact_years": getattr(r, "fact_years", []),
                         "section_title": r.section,
                         "excerpt": extracted_answer if extracted_answer else chunk_text[:240] + "...",
+                        "exact_answer": extracted_answer,
                         "full_text": chunk_text,
                         "highlighted_text": highlighted_text or chunk_text,
-                        "is_table_row": " | " in (extracted_answer or ""),
+                        "is_table_row": (" | " in (extracted_answer or "") or "Unit:" in (extracted_answer or "") or " = " in (extracted_answer or "")),
                     })
                 comparisons[m_name] = items
 
@@ -223,17 +225,19 @@ def create_app(engine: Optional[SearchEngine] = None) -> FastAPI:
             highlighted_text = r.highlighted_text
             confidence = r.answer_confidence
 
+            is_tbl = any(marker in extracted_answer for marker in (" | ", "Unit:", " = "))
             if not extracted_answer:
-                ext = AnswerExtractor.extract(req.query, chunk_text)
+                ext = AnswerExtractor.extract(req.query, chunk_text, company=r.company, ticker=r.ticker)
                 extracted_answer = ext.exact_answer
                 highlighted_text = ext.highlighted_text
                 confidence = ext.confidence
+                is_tbl = ext.is_table_row
 
-            if idx == 0:
+            if top_extracted is None and extracted_answer and confidence >= 0.3:
                 top_extracted = {
                     "exact_answer": extracted_answer,
                     "confidence": confidence,
-                    "is_table_row": " | " in (extracted_answer or ""),
+                    "is_table_row": is_tbl,
                     "source": f"{r.company} ({r.ticker}) - {r.document_type} ({r.fiscal_period})",
                     "section": r.section,
                     "score": round(r.score, 4),
@@ -246,11 +250,13 @@ def create_app(engine: Optional[SearchEngine] = None) -> FastAPI:
                 "company_name": r.company,
                 "form_type": r.document_type,
                 "fiscal_year": r.fiscal_period,
+                "fact_years": getattr(r, "fact_years", []),
                 "section_title": r.section,
                 "excerpt": extracted_answer if extracted_answer else chunk_text[:240] + "...",
+                "exact_answer": extracted_answer,
                 "full_text": chunk_text,
                 "highlighted_text": highlighted_text or chunk_text,
-                "is_table_row": " | " in (extracted_answer or ""),
+                "is_table_row": is_tbl,
             })
 
         return {

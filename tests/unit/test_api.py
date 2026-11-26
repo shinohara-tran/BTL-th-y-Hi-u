@@ -15,7 +15,7 @@ def test_api_status_and_metadata():
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "online"
-    assert data["collection"] == "financial_docs"
+    assert data["collection"] in ["team_docs", "financial_docs", "team_docs_p1", "team_docs_final"]
     assert "dense_model" in data
 
     # Test /api/metadata

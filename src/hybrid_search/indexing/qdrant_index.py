@@ -84,7 +84,8 @@ class QdrantIndexManager:
                     index=models.SparseIndexParams(on_disk=False),
                 ),
                 "sparse": models.SparseVectorParams(
-                    modifier=models.Modifier.IDF,
+                    # SPLADE weights are already learned; Qdrant IDF would count rarity twice
+                    modifier=None,
                     index=models.SparseIndexParams(on_disk=False),
                 ),
             },
@@ -97,6 +98,7 @@ class QdrantIndexManager:
             ("document_type", models.PayloadSchemaType.KEYWORD),
             ("filing_date", models.PayloadSchemaType.DATETIME),
             ("fiscal_period", models.PayloadSchemaType.KEYWORD),
+            ("fact_years", models.PayloadSchemaType.KEYWORD),
             ("section", models.PayloadSchemaType.KEYWORD),
             ("sector", models.PayloadSchemaType.KEYWORD),
             ("geography", models.PayloadSchemaType.KEYWORD),
@@ -199,6 +201,7 @@ class QdrantIndexManager:
                     "document_type": chunk.document_type,
                     "filing_date": chunk.filing_date,
                     "fiscal_period": chunk.fiscal_period,
+                    "fact_years": chunk.fact_years,
                     "section": chunk.section,
                     "sector": chunk.sector,
                     "geography": chunk.geography,

@@ -54,6 +54,7 @@ class Chunk(BaseModel):
     chunk_index: int = Field(default=0, description="0-indexed position within parent document")
     source_url: str = Field(default="", description="EDGAR source URL")
     accession_number: str = Field(default="", description="Parent accession number")
+    fact_years: List[int] = Field(default_factory=list, description="Years of financial facts mentioned in chunk")
 
     # Vector representations populated during embedding / indexing
     dense_vector: Optional[List[float]] = Field(default=None, description="Dense embedding (e.g. 384 dims)")

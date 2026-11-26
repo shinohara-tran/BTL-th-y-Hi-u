@@ -5,23 +5,72 @@ from __future__ import annotations
 import re
 import json
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
 from hybrid_search.models.document import Chunk, Document
+
+_TOKENIZER: Optional[Any] = None
+
+
+def get_tokenizer() -> Optional[Any]:
+    """Retrieves cached tokenizer for BAAI/bge-small-en-v1.5, prioritizing local fastembed cache."""
+    global _TOKENIZER
+    if _TOKENIZER is None:
+        try:
+            from fastembed import TextEmbedding
+            _TOKENIZER = TextEmbedding(model_name="BAAI/bge-small-en-v1.5").model.tokenizer
+            _TOKENIZER.no_truncation()
+        except Exception:
+            try:
+                from tokenizers import Tokenizer
+                _TOKENIZER = Tokenizer.from_pretrained("BAAI/bge-small-en-v1.5")
+                _TOKENIZER.no_truncation()
+            except Exception:
+                _TOKENIZER = None
+    return _TOKENIZER
+
+
+def count_tokens(text: str, tokenizer: Optional[Any] = None) -> int:
+    """Calculates exact token count using BGE tokenizer with word-count fallback."""
+    tok = tokenizer or get_tokenizer()
+    if tok is not None:
+        try:
+            return len(tok.encode(text).ids)
+        except Exception:
+            pass
+    # Fallback to word-based approximation: 1 token ≈ 0.75 words
+    return int(len(text.split()) * 1.33)
+
+
+def extract_fact_years(text: str, fallback_period: Optional[str] = None) -> List[int]:
+    """Extracts all financial years present in text and fallback fiscal period."""
+    years = set()
+    found = re.findall(r"\b(201[0-9]|202[0-9])\b", text)
+    for y in found:
+        years.add(int(y))
+    if not years and fallback_period and fallback_period != "Unknown":
+        fp_years = re.findall(r"(?:FY|Q-|Event\s+)?(201[0-9]|202[0-9])", fallback_period)
+        for y in fp_years:
+            years.add(int(y))
+    return sorted(list(years))
 
 
 class DocumentChunker:
     """Splits Document sections into overlapping, boundary-aware text chunks with contextual metadata."""
 
+    MAX_MODEL_TOKENS: int = 480
+
     def __init__(
         self,
-        chunk_size_tokens: int = 500,
-        chunk_overlap_tokens: int = 100,
+        chunk_size_tokens: int = 480,
+        chunk_overlap_tokens: int = 80,
+        tokenizer: Optional[Any] = None,
     ):
-        self.chunk_size_tokens = chunk_size_tokens
-        self.chunk_overlap_tokens = chunk_overlap_tokens
-        # Approximation: 1 token ≈ 0.75 words (or ~4 characters)
-        self.target_word_size = max(int(chunk_size_tokens * 0.75), 60)
-        self.overlap_word_size = max(int(chunk_overlap_tokens * 0.75), 15)
+        self.max_tokens = min(chunk_size_tokens, self.MAX_MODEL_TOKENS)
+        self.chunk_overlap_tokens = min(chunk_overlap_tokens, self.max_tokens // 2)
+        self.tokenizer = tokenizer or get_tokenizer()
+
+    def count_tokens(self, text: str) -> int:
+        return count_tokens(text, self.tokenizer)
 
     @classmethod
     def split_into_sentences(cls, text: str) -> List[str]:
@@ -35,8 +84,8 @@ class DocumentChunker:
         units: List[str] = []
 
         for para in paragraphs:
-            # If paragraph contains markdown/pipe table rows, split by line to keep rows atomic
-            if "|" in para and "\n" in para:
+            # If paragraph contains markdown/pipe table rows or row-to-text lines, split by line to keep rows atomic
+            if ("|" in para or "Unit:" in para) and "\n" in para:
                 lines = [l.strip() for l in para.split("\n") if l.strip()]
                 units.extend(lines)
                 continue
@@ -51,72 +100,106 @@ class DocumentChunker:
 
         return units
 
-    def chunk_section_text(self, text: str) -> List[str]:
+    def chunk_section_text(
+        self,
+        text: str,
+        max_tokens: Optional[int] = None,
+        overlap_tokens: Optional[int] = None,
+    ) -> List[str]:
         """Chunks section text into overlapping windows respecting sentence/table boundaries."""
         sentences = self.split_into_sentences(text)
         if not sentences:
             return []
 
+        target_tokens = max_tokens if max_tokens is not None else max(self.max_tokens - 30, 60)
+        target_overlap = overlap_tokens if overlap_tokens is not None else min(self.chunk_overlap_tokens, target_tokens // 3)
+
         chunks: List[str] = []
         current_sentences: List[str] = []
-        current_words = 0
+        current_tokens = 0
 
         for sentence in sentences:
-            sentence_words = len(sentence.split())
+            s_tokens = self.count_tokens(sentence)
 
-            # If a single sentence or table row is larger than target_word_size, split by word window
-            if sentence_words > self.target_word_size * 1.5:
+            # If a single sentence or table row is larger than target_tokens, split by word window
+            if s_tokens > target_tokens:
                 words = sentence.split()
-                step = max(self.target_word_size - self.overlap_word_size, 1)
-                for start_idx in range(0, len(words), step):
-                    window = words[start_idx : start_idx + self.target_word_size]
-                    if window:
-                        chunks.append(" ".join(window))
+                start_w = 0
+                while start_w < len(words):
+                    end_w = len(words)
+                    while end_w > start_w and self.count_tokens(" ".join(words[start_w:end_w])) > target_tokens:
+                        end_w -= 5
+                    if end_w <= start_w:
+                        end_w = start_w + 1
+                    sub_text = " ".join(words[start_w:end_w])
+                    chunks.append(sub_text)
+                    step = end_w - start_w
+                    if step > 5:
+                        step = max(step - 10, 1)
+                    start_w += step
                 continue
 
-            if current_words + sentence_words > self.target_word_size and current_sentences:
-                chunks.append(" ".join(current_sentences))
+            if current_tokens + s_tokens > target_tokens and current_sentences:
+                chunk_sep = "\n" if any("Unit:" in s for s in current_sentences) else " "
+                chunks.append(chunk_sep.join(current_sentences))
                 # Compute overlap sentences to retain
                 overlap_sentences: List[str] = []
-                overlap_words = 0
+                overlap_tokens_acc = 0
                 for s in reversed(current_sentences):
-                    s_w = len(s.split())
-                    if overlap_words + s_w <= self.overlap_word_size:
+                    st = self.count_tokens(s)
+                    if overlap_tokens_acc + st <= target_overlap:
                         overlap_sentences.insert(0, s)
-                        overlap_words += s_w
+                        overlap_tokens_acc += st
                     else:
                         break
                 current_sentences = list(overlap_sentences)
-                current_words = overlap_words
+                current_tokens = self.count_tokens(" ".join(current_sentences)) if current_sentences else 0
 
             current_sentences.append(sentence)
-            current_words += sentence_words
+            current_tokens = self.count_tokens(" ".join(current_sentences))
 
         if current_sentences:
-            final_chunk = " ".join(current_sentences)
+            chunk_sep = "\n" if any("Unit:" in s for s in current_sentences) else " "
+            final_chunk = chunk_sep.join(current_sentences)
             if not chunks or final_chunk != chunks[-1]:
                 chunks.append(final_chunk)
 
         return chunks
 
     def chunk_document(self, document: Document, start_chunk_idx: int = 0) -> List[Chunk]:
-        """Creates contextualized Chunk models from all sections of a Document."""
+        """Creates contextualized Chunk models from all sections of a Document with strict <= 480 token limit."""
         chunks: List[Chunk] = []
         chunk_idx = start_chunk_idx
 
         sections = document.sections or []
         for section in sections:
-            section_chunks = self.chunk_section_text(section.text)
+            # Contextual enrichment prefix: ensures dense, sparse, and lexical embeddings
+            # retain critical entity, ticker, document type, period, and section context
+            context_prefix = (
+                f"[{document.company} ({document.ticker}) | {document.document_type} {document.fiscal_period} | "
+                f"Section: {section.section_name}]\n\n"
+            )
+            prefix_tokens = self.count_tokens(context_prefix)
+            target_body_tokens = max(self.max_tokens - prefix_tokens, 60)
+            overlap_body_tokens = max(min(self.chunk_overlap_tokens, target_body_tokens // 3), 10)
+
+            section_chunks = self.chunk_section_text(
+                section.text,
+                max_tokens=target_body_tokens,
+                overlap_tokens=overlap_body_tokens,
+            )
+
             for text_piece in section_chunks:
                 chunk_id = f"{document.document_id}_chunk_{chunk_idx:04d}"
-
-                # Contextual enrichment prefix: ensures dense, sparse, and lexical embeddings
-                # retain critical entity, ticker, document type, period, and section context
-                context_prefix = (
-                    f"[{document.company} ({document.ticker}) | {document.document_type} {document.fiscal_period} | "
-                    f"Section: {section.section_name}]\n\n"
-                )
                 enriched_text = context_prefix + text_piece
+
+                # Strict guarantee: ensure header + chunk body <= MAX_MODEL_TOKENS (480)
+                while self.count_tokens(enriched_text) > self.MAX_MODEL_TOKENS and len(text_piece.split()) > 5:
+                    words = text_piece.split()
+                    text_piece = " ".join(words[:-5])
+                    enriched_text = context_prefix + text_piece
+
+                fact_years = extract_fact_years(text_piece, fallback_period=document.fiscal_period)
 
                 chunk = Chunk(
                     chunk_id=chunk_id,
@@ -131,6 +214,7 @@ class DocumentChunker:
                     sector=document.sector or "Unknown",
                     geography=document.geography or "US",
                     text=enriched_text,
+                    fact_years=fact_years,
                     chunk_index=chunk_idx,
                     source_url=document.source_url,
                     accession_number=document.accession_number,
@@ -157,6 +241,7 @@ class DocumentChunker:
             with open(out_file, "w", encoding="utf-8") as f:
                 for c in all_chunks:
                     f.write(json.dumps(c.model_dump()) + "\n")
+
 
             manifest_file = out_file.parent / "manifest.json"
             manifest_data = {

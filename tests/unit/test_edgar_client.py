@@ -59,3 +59,17 @@ def test_parse_submissions_json():
     assert filings[0].ticker == "NVDA"
     assert filings[1].form == "10-Q"
     assert filings[2].form == "10-Q"
+
+def test_annual_label_uses_period_end_with_filing_year_selection():
+    recent = {"form": ["10-K"], "filingDate": ["2023-02-03"], "reportDate": ["2022-12-31"]}
+    filing, = EdgarClient.parse_submissions_json({"cik": "1018724", "filings": {"recent": recent}}, "AMZN", "Amazon")
+    assert filing.fiscal_period == "FY2022"
+    recent.pop("reportDate")
+    filing, = EdgarClient.parse_submissions_json({"cik": "1018724", "filings": {"recent": recent}}, "AMZN", "Amazon")
+    assert filing.fiscal_period == "Unknown"
+
+
+def test_vinfast_event_is_distinct_from_annual_20f():
+    from hybrid_search.ingestion.edgar_client import filing_period
+    assert filing_period("20-F", "2023-08-14", "2023-08-18", "0001193125-23-215977") == "Event 2023-08-14"
+    assert filing_period("20-F", "2024-12-31", "2025-04-28", "") == "FY2024"

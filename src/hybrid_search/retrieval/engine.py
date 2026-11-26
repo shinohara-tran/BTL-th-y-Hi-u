@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 from qdrant_client import QdrantClient
-from hybrid_search.config import AppConfig
+from hybrid_search.config import AppConfig, load_config
 from hybrid_search.embeddings.bm25 import BM25EmbeddingGenerator
 from hybrid_search.embeddings.dense import DenseEmbeddingGenerator
 from hybrid_search.embeddings.sparse import SpladeEmbeddingGenerator
@@ -15,7 +15,10 @@ from hybrid_search.retrieval.base import BaseRetriever
 from hybrid_search.retrieval.bm25_dense_retriever import BM25DenseRetriever
 from hybrid_search.retrieval.bm25_retriever import BM25Retriever
 from hybrid_search.retrieval.dense_retriever import DenseRetriever
+from hybrid_search.retrieval.extractor import AnswerExtractor
+from hybrid_search.retrieval.query_parser import QueryParser
 from hybrid_search.retrieval.reranker import NeuralReranker
+from hybrid_search.retrieval.smart_hybrid import MODES as SMART_MODES, SmartHybridRetriever
 from hybrid_search.retrieval.sparse_dense_retriever import SparseDenseRetriever
 from hybrid_search.retrieval.sparse_retriever import SparseRetriever
 
@@ -23,7 +26,7 @@ from hybrid_search.retrieval.sparse_retriever import SparseRetriever
 class SearchEngine:
     """Unified engine encapsulating all retrieval configurations on Qdrant with Cross-Encoder Reranking."""
 
-    METHOD_NAMES = ["bm25", "dense", "bm25_dense", "sparse", "sparse_dense", "rerank"]
+    METHOD_NAMES = ["bm25", "dense", "bm25_dense", "sparse", "sparse_dense", "rerank", *SMART_MODES]
 
     def __init__(
         self,
@@ -31,7 +34,7 @@ class SearchEngine:
         client: Optional[QdrantClient] = None,
         in_memory: bool = False,
     ):
-        self.config = config or AppConfig()
+        self.config = config or load_config()
         self.index_manager = QdrantIndexManager(config=self.config, client=client, in_memory=in_memory)
         self.client = self.index_manager.client
         self.collection_name = self.config.qdrant.collection_name
@@ -75,6 +78,20 @@ class SearchEngine:
             ),
         }
 
+        # Phần 3: three ablation steps of the smart hybrid retriever, sharing the base retrievers above.
+        parser = QueryParser(self.config.companies)
+        for mode in SMART_MODES:
+            self.retrievers[mode] = SmartHybridRetriever(
+                client=self.client,
+                collection_name=self.collection_name,
+                parser=parser,
+                bm25=self.retrievers["bm25"],
+                dense=self.retrievers["dense"],
+                server_hybrid=self.retrievers["bm25_dense"],
+                settings=self.config.retrieval,
+                mode=mode,
+            )
+
     def search(
         self,
         query: str,
@@ -85,13 +102,36 @@ class SearchEngine:
     ) -> List[SearchResult]:
         """Executes search with a specified retrieval configuration or neural reranking."""
         if method == "rerank":
-            # Retrieve initial hybrid candidates from BM25+Dense and SPLADE+Dense
+            configured_limit = self.reranker.candidate_limit
+            budget = max(k, configured_limit) if configured_limit else max(k * 3, 20)
+            # Retrieve initial hybrid candidates from SPLADE+Dense.
             base_candidates = self.retrievers["sparse_dense"].search(
                 query=query,
-                k=max(k * 3, 20),
+                k=budget,
                 filters=filters,
                 prefetch_k=prefetch_k,
             )
+            table_terms = AnswerExtractor.table_search_terms(query)
+            if table_terms and not any(
+                AnswerExtractor.extract(query, result.text).exact_answer
+                for result in base_candidates
+            ):
+                # The general search may retrieve the row without the preceding year headers.
+                table_candidates = self.retrievers["bm25"].search(
+                    query=f"{query} {table_terms}",
+                    k=20,
+                    filters=filters,
+                )
+                existing = {result.chunk_id for result in base_candidates}
+                verified_candidates = [
+                    result for result in table_candidates
+                    if result.chunk_id not in existing
+                    and AnswerExtractor.extract(query, result.text).exact_answer
+                ]
+                if configured_limit:
+                    base_candidates = (verified_candidates + base_candidates)[:budget]
+                else:
+                    base_candidates.extend(verified_candidates)
             # Rerank candidates with Cross-Feature Neural Scoring
             return self.reranker.rerank(query=query, results=base_candidates, top_k=k)
 

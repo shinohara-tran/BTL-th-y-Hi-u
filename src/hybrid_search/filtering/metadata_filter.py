@@ -127,6 +127,23 @@ class QdrantFilterBuilder:
                     )
                 )
 
+        # Fact years (financial data years)
+        if filter_spec.fact_years:
+            if len(filter_spec.fact_years) == 1:
+                must_conditions.append(
+                    models.FieldCondition(
+                        key="fact_years",
+                        match=models.MatchValue(value=filter_spec.fact_years[0]),
+                    )
+                )
+            else:
+                must_conditions.append(
+                    models.FieldCondition(
+                        key="fact_years",
+                        match=models.MatchAny(any=filter_spec.fact_years),
+                    )
+                )
+
         # Date range filtering using DatetimeRange
         if filter_spec.filing_date_start or filter_spec.filing_date_end:
             gte_dt = cls._parse_date(filter_spec.filing_date_start) if filter_spec.filing_date_start else None

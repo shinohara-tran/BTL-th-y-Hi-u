@@ -6,8 +6,8 @@ edgar:
   cache_dir: "data/raw/edgar"
 
 chunking:
-  chunk_size_tokens: 500
-  chunk_overlap_tokens: 100
+  chunk_size_tokens: 480
+  chunk_overlap_tokens: 80
 
 embeddings:
   dense_model: "BAAI/bge-small-en-v1.5"
@@ -17,11 +17,11 @@ embeddings:
   sparse_batch_size: 32
 
 qdrant:
-  url: "http://localhost:6333"         # For Qdrant Cloud: "https://your-cluster.eu-central.aws.cloud.qdrant.io:6333"
+  url: "http://127.0.0.1:6333"         # For Qdrant Cloud: "https://your-cluster.eu-central.aws.cloud.qdrant.io:6333"
   api_key: null                        # For Qdrant Cloud: "your-api-key-here" (or set QDRANT_API_KEY env var)
   local_path: "qdrant_data"
   prefer_local_embedded: false
-  collection_name: "team_docs"        # tách khỏi collection gốc "financial_docs" của repo upstream
+  collection_name: "team_docs_final"
   dense_vector_size: 384
   upsert_batch_size: 100
 
@@ -29,6 +29,10 @@ retrieval:
   default_k: 10
   prefetch_k: 50
   rrf_constant: 60
+  # Phần 3: trọng số BM25 theo loại câu hỏi (Dense = 1 - trọng số). Chỉnh trên tập dev.
+  lexical_weight_code: 0.7      # câu có mã: ASC 606, MI300, CET1...
+  lexical_weight_concept: 0.5   # câu dài, hỏi theo ý
+  dedup_threshold: 0.95         # cosine >= ngưỡng này thì coi là đoạn lặp
 
 benchmark:
   num_latency_runs: 5

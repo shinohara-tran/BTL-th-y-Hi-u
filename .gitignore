@@ -38,6 +38,9 @@ qdrant_storage/
 qdrant_data/
 *.db
 *.sqlite
+*.exe
+part1_submission/
+*suggested_labels*
 
 # Environment variables & secrets
 .env

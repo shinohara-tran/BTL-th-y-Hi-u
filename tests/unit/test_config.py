@@ -11,7 +11,7 @@ def test_load_default_config():
     assert config.embeddings.bm25_model == "Qdrant/bm25"
     assert config.embeddings.sparse_model == "prithivida/Splade_PP_en_v1"
     # Team dataset (config/companies.yaml); upstream list is kept in companies_original.yaml
-    assert config.qdrant.collection_name in ["team_docs", "financial_docs", "team_docs_p1"]
+    assert config.qdrant.collection_name in ["team_docs", "financial_docs", "team_docs_p1", "team_docs_final"]
     tickers = [c.ticker for c in config.companies]
     assert len(tickers) == 13
     assert {"NVDA", "AAPL", "TSM", "VFS", "LLY", "JPM"} <= set(tickers)

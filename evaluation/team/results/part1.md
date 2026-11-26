@@ -1,26 +1,26 @@
 # Kết quả: part1
 
-- **timestamp**: 2026-11-25T16:44:59
-- **git_commit**: unknown
+- **timestamp**: 2026-11-25T21:54:04
+- **git_commit**: 7cbbe5c
 - **split**: all
 - **n_queries**: 24
-- **n_points**: 13137
+- **n_points**: 14022
 - **dense_model**: BAAI/bge-small-en-v1.5
 - **sparse_model**: prithivida/Splade_PP_en_v1
 - **bm25_model**: Qdrant/bm25
-- **collection**: team_docs_p1
+- **collection**: team_docs_final
 - **machine**: Windows AMD64, Python 3.11.9
 
 ## Tổng hợp
 
 | Method | mrr | ndcg@10 | recall@10 | p@10 | company@5 | dup@5 | unjudged@10 | p50 ms | p95 ms |
 |---|---|---|---|---|---|---|---|---|---|
-| bm25 | - | - | - | - | 0.826 | 0.083 | - | 2086.0 | 2169.3 |
-| dense | - | - | - | - | 0.783 | 0.083 | - | 2089.2 | 2160.5 |
-| bm25_dense | - | - | - | - | 0.826 | 0.067 | - | 2099.2 | 2141.8 |
-| sparse | - | - | - | - | 0.861 | 0.058 | - | 2146.0 | 2820.4 |
-| sparse_dense | - | - | - | - | 0.861 | 0.050 | - | 2208.2 | 2346.5 |
-| rerank | - | - | - | - | 0.843 | 0.067 | - | 43054.5 | 52356.1 |
+| bm25 | - | - | - | - | 0.817 | 0.075 | - | 39.8 | 96.5 |
+| dense | - | - | - | - | 0.800 | 0.050 | - | 67.3 | 134.1 |
+| bm25_dense | - | - | - | - | 0.835 | 0.033 | - | 70.8 | 155.6 |
+| sparse | - | - | - | - | 0.861 | 0.033 | - | 118.2 | 286.2 |
+| sparse_dense | - | - | - | - | 0.861 | 0.017 | - | 371.3 | 505.3 |
+| rerank | - | - | - | - | 0.878 | 0.025 | - | 43951.0 | 62201.0 |
 
 ## Theo nhóm câu hỏi (NDCG@10)
 

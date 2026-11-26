@@ -70,7 +70,9 @@ class NeuralReranker:
         evidence = {}
         if AnswerExtractor.table_search_terms(query):
             evidence = {
-                result.chunk_id: AnswerExtractor.extract(query, result.text)
+                result.chunk_id: AnswerExtractor.extract(
+                    query, result.text, company=result.company, ticker=result.ticker
+                )
                 for _, result in ranked
             }
         ranked.sort(key=lambda pair: (

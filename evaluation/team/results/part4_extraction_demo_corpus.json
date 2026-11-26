@@ -1,0 +1,49 @@
+{
+  "scope": "Extractor scan, not live ranking",
+  "cases": [
+    {
+      "case": "aapl-services",
+      "matching_chunks": [
+        "0000320193_0000320193-25-000079_chunk_0080",
+        "0000320193_0000320193-24-000123_chunk_0078"
+      ],
+      "passed": true
+    },
+    {
+      "case": "aapl-annual",
+      "matching_chunks": [
+        "0000320193_0000320193-25-000079_chunk_0053"
+      ],
+      "passed": true
+    },
+    {
+      "case": "aapl-quarter",
+      "matching_chunks": [
+        "0000320193_0000320193-25-000073_chunk_0042"
+      ],
+      "passed": true
+    },
+    {
+      "case": "jpm-eps",
+      "matching_chunks": [
+        "0000019617_0000019617-25-000270_chunk_0133"
+      ],
+      "passed": true
+    },
+    {
+      "case": "lly-revenue",
+      "matching_chunks": [
+        "0000059478_0000059478-25-000067_chunk_0118"
+      ],
+      "passed": true
+    },
+    {
+      "case": "vfs-ev",
+      "matching_chunks": [
+        "0001913510_0001410578-25-000943_chunk_0046",
+        "0001913510_0001410578-25-000943_chunk_0319"
+      ],
+      "passed": true
+    }
+  ]
+}

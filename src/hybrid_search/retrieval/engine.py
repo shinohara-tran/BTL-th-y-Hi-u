@@ -113,7 +113,7 @@ class SearchEngine:
             )
             table_terms = AnswerExtractor.table_search_terms(query)
             if table_terms and not any(
-                AnswerExtractor.extract(query, result.text).exact_answer
+                AnswerExtractor.extract(query, result.text, company=result.company, ticker=result.ticker).exact_answer
                 for result in base_candidates
             ):
                 # The general search may retrieve the row without the preceding year headers.
@@ -126,7 +126,7 @@ class SearchEngine:
                 verified_candidates = [
                     result for result in table_candidates
                     if result.chunk_id not in existing
-                    and AnswerExtractor.extract(query, result.text).exact_answer
+                    and AnswerExtractor.extract(query, result.text, company=result.company, ticker=result.ticker).exact_answer
                 ]
                 if configured_limit:
                     base_candidates = (verified_candidates + base_candidates)[:budget]

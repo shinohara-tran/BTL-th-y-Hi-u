@@ -226,11 +226,14 @@ def create_app(engine: Optional[SearchEngine] = None) -> FastAPI:
             confidence = r.answer_confidence
 
             is_tbl = any(marker in extracted_answer for marker in (" | ", "Unit:", " = "))
-            if not extracted_answer:
+            # Revalidate table answers against their source even if a retriever supplied
+            # an answer/confidence. A high score never substitutes for column evidence.
+            strict_table = bool(AnswerExtractor.table_search_terms(req.query)) and "Unit:" in chunk_text and " = " in chunk_text
+            if not extracted_answer or strict_table:
                 ext = AnswerExtractor.extract(req.query, chunk_text, company=r.company, ticker=r.ticker)
                 extracted_answer = ext.exact_answer
                 highlighted_text = ext.highlighted_text
-                confidence = ext.confidence
+                confidence = min(confidence, ext.confidence) if r.exact_answer else ext.confidence
                 is_tbl = ext.is_table_row
 
             if top_extracted is None and extracted_answer and confidence >= 0.3:

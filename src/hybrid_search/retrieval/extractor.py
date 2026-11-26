@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
+from hybrid_search.retrieval.table_evidence import metric_request, normalized_fact
 
 
 def requested_period(query):
@@ -53,6 +54,32 @@ class AnswerExtractor:
         header = header_match.group(1) if header_match else ""
         body = chunk_text[len(header):].strip() if header else chunk_text.strip()
 
+        entity = re.search(r"\b(?:was|were|is|are)\s+([^?]+?)['’]s\s+", query, re.I)
+        source_entity = f"{company} {ticker}".strip()
+        if not source_entity and "|" in header:
+            source_entity = header.partition("|")[0].lstrip("[")
+        if entity and source_entity:
+            asked = set(re.findall(r"[a-z]+", entity[1].lower())) - {"inc", "corporation", "company", "the"}
+            actual = set(re.findall(r"[a-z]+", source_entity.lower()))
+            if asked and not asked.intersection(actual):
+                return ExtractedAnswer("", 0.0, chunk_text)
+
+        # Read column evidence before the generic sentence fallback, for every issuer.
+        request = metric_request(query, company, ticker)
+        if request and requested_period(query) and "Unit:" in body and " = " in body:
+            filing = re.search(r"\b(10-K|10-Q|20-F)\b", header)
+            fact = normalized_fact(query, body, requested_period(query), company, ticker,
+                                   filing[1] if filing else "")
+            # Some tables mix normalized monetary rows with comma-separated
+            # percentage rows. Preserve their explicit-column reader.
+            if fact is None and cls._gross_margin_segment(query):
+                fact = cls._extract_margin_rows(query, body)
+            if fact:
+                answer, row = fact
+                return ExtractedAnswer(answer, 1.0, cls._highlight_in_text(chunk_text, row), True)
+            # Do not turn a missing column or contradictory unit into a prose answer.
+            return ExtractedAnswer("", 0.0, chunk_text)
+
         # These table questions require an explicit column and a matching row.
         terms = cls.table_search_terms(query)
         if cls._gsm_delivery_date(query):
@@ -63,7 +90,8 @@ class AnswerExtractor:
                 return ExtractedAnswer(answer, 1.0, f"{header}\n\n{highlighted}".strip())
             return ExtractedAnswer("", 0.0, chunk_text)
 
-        if terms:
+        if terms and (cls.services_sales_year(query) or cls._gross_margin_segment(query)
+                      or cls._eps_variant(query) or cls._total_revenue_question(query)):
             fact = cls._extract_normalized_row(query, body)
             if fact:
                 answer, row = fact
@@ -271,10 +299,13 @@ class AnswerExtractor:
         period = requested_period(query)
         if period and period[1] == "annual":
             # Use strict statement extraction for the validated filing layouts.
-            if re.search(r"\b(?:jpmorgan|jpm)\b", query, re.I) and cls._eps_variant(query):
+            if cls._eps_variant(query):
                 return "earnings per share data net income basic diluted"
-            if re.search(r"\b(?:eli lilly|lly)\b", query, re.I) and cls._total_revenue_question(query):
+            if cls._total_revenue_question(query):
                 return "consolidated statements of operations total revenue dollars in millions"
+        request = metric_request(query)
+        if request and requested_period(query):
+            return " ".join(sorted(request[0])) + " year ended Unit"
         return ""
 
     @staticmethod
@@ -542,7 +573,10 @@ class AnswerExtractor:
         if re.search(r"weighted[ -]average.*shares|shares outstanding", q) and not re.search(r"\d[\d,.]*", a):
             return 0.0
         years = set(re.findall(r"(?:\bfy\s*|\b)((?:19|20)\d{2})\b", q))
-        if years and not all(year in a for year in years):
+        answer_years = set(re.findall(r"(?:\bfy\s*|\b)((?:19|20)\d{2})\b", a))
+        if years and not years.issubset(answer_years):
+            if metric_request(query):
+                return 0.0
             score = min(score, 0.5)
         annual = re.search(r"\b(?:fiscal(?: year)?|full year|fy)\s*\d{4}", q)
         interim = re.search(r"\b(?:quarter|q[1-4]|months?)\b", q)

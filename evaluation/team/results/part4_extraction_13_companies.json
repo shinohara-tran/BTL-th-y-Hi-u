@@ -1,0 +1,109 @@
+{
+  "scope": "Extraction on 13 pinned real chunks; not end-to-end retrieval; None expects abstention for insufficient evidence",
+  "cases": [
+    {
+      "ticker": "NVDA",
+      "chunk_id": "0001045810_0001045810-25-000023_chunk_0171",
+      "query": "What were NVIDIA's basic weighted average shares in fiscal 2025?",
+      "expected": "24,555 million shares",
+      "answer": "Basic weighted average shares - FY2025: 24,555 million shares",
+      "passed": true
+    },
+    {
+      "ticker": "AAPL",
+      "chunk_id": "0000320193_0000320193-25-000079_chunk_0065",
+      "query": "What was Apple's net income in fiscal 2024?",
+      "expected": "$93,736 million",
+      "answer": "Net income - FY2024: $93,736 million",
+      "passed": true
+    },
+    {
+      "ticker": "MSFT",
+      "chunk_id": "0000789019_0000950170-25-100235_chunk_0095",
+      "query": "What was Microsoft's net income in fiscal 2024?",
+      "expected": "$88,136 million",
+      "answer": "Net income - FY2024: $88,136 million",
+      "passed": true
+    },
+    {
+      "ticker": "GOOGL",
+      "chunk_id": "0001652044_0001652044-25-000014_chunk_0079",
+      "query": "What was Alphabet's total revenue in fiscal 2024?",
+      "expected": "$350,018 million",
+      "answer": "Total revenue - FY2024: $350,018 million",
+      "passed": true
+    },
+    {
+      "ticker": "AMZN",
+      "chunk_id": "0001018724_0001018724-25-000004_chunk_0094",
+      "query": "What was Amazon's net income in fiscal 2024?",
+      "expected": "$59,248 million",
+      "answer": "Net income - FY2024: $59,248 million",
+      "passed": true
+    },
+    {
+      "ticker": "META",
+      "chunk_id": "0001326801_0001326801-25-000017_chunk_0178",
+      "query": "What was Meta's net income in fiscal 2024?",
+      "expected": "$62,360 million",
+      "answer": "Net income - FY2024: $62,360 million",
+      "passed": true
+    },
+    {
+      "ticker": "TSLA",
+      "chunk_id": "0001318605_0001628280-25-003063_chunk_0106",
+      "query": "What was Tesla's total revenue in fiscal 2024?",
+      "expected": "$97,690 million",
+      "answer": "Total revenue - FY2024: $97,690 million",
+      "passed": true
+    },
+    {
+      "ticker": "AMD",
+      "chunk_id": "0000002488_0000002488-25-000012_chunk_0125",
+      "query": "What was AMD's basic earnings per share in fiscal 2024?",
+      "expected": "$1.01 per share",
+      "answer": "Basic earnings per share - FY2024: $1.01 per share",
+      "passed": true
+    },
+    {
+      "ticker": "INTC",
+      "chunk_id": "0000050863_0000050863-25-000009_chunk_0161",
+      "query": "What were Intel's total assets in fiscal 2024?",
+      "expected": null,
+      "answer": "",
+      "passed": true
+    },
+    {
+      "ticker": "TSM",
+      "chunk_id": "0001046179_0001193125-25-083423_chunk_0078",
+      "query": "What was TSM's net revenue in fiscal 2024?",
+      "expected": null,
+      "answer": "",
+      "passed": true
+    },
+    {
+      "ticker": "VFS",
+      "chunk_id": "0001913510_0001410578-25-000943_chunk_0411",
+      "query": "What were VinFast's total assets in fiscal 2024?",
+      "expected": null,
+      "answer": "",
+      "passed": true
+    },
+    {
+      "ticker": "LLY",
+      "chunk_id": "0000059478_0000059478-25-000067_chunk_0118",
+      "query": "What was Eli Lilly's total revenue for fiscal 2024, in millions of dollars?",
+      "expected": "$45,042.7 million",
+      "answer": "Total revenue - FY2024: $45,042.7 million",
+      "passed": true
+    },
+    {
+      "ticker": "JPM",
+      "chunk_id": "0000019617_0000019617-25-000270_chunk_0133",
+      "query": "What was JPMorgan's basic earnings per share in fiscal 2024?",
+      "expected": "$19.79 per share",
+      "answer": "Basic earnings per share - FY2024: $19.79 per share",
+      "passed": true
+    }
+  ]
+}

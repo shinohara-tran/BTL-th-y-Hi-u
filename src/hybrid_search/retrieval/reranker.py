@@ -37,6 +37,10 @@ class NeuralReranker:
         self.batch_size = int(os.environ.get("HYBRID_RERANK_BATCH_SIZE", "2"))
         if self.batch_size < 1:
             raise ValueError("HYBRID_RERANK_BATCH_SIZE must be positive")
+        self.candidate_limit = int(os.environ.get("HYBRID_RERANK_CANDIDATES", "10"))
+        self.max_passage_tokens = int(os.environ.get("HYBRID_RERANK_PASSAGE_TOKENS", "256"))
+        if min(self.candidate_limit, self.max_passage_tokens) < 0:
+            raise ValueError("Reranker limits must be non-negative (0 uses the default)")
         self._model = None
         self._load_lock = Lock()
 
@@ -49,9 +53,17 @@ class NeuralReranker:
         with self._load_lock:
             if self._model is None:
                 self._model = TextCrossEncoder(model_name=self.model_name)
-        scores = self._model.rerank(
-            query, [result.text for result in results], batch_size=self.batch_size
-        )
+        passages = [result.text for result in results]
+        if self.max_passage_tokens:
+            tokenizer = self._model.model.tokenizer
+            shortened = []
+            for passage in passages:
+                tokens = tokenizer.encode(passage, add_special_tokens=False)
+                if len(tokens.ids) > self.max_passage_tokens:
+                    passage = passage[:tokens.offsets[self.max_passage_tokens - 1][1]]
+                shortened.append(passage)
+            passages = shortened
+        scores = self._model.rerank(query, passages, batch_size=self.batch_size)
         ranked = sorted(zip(scores, results, strict=True), key=lambda pair: pair[0], reverse=True)
         period = requested_period(query)
         # Prefer a verified table column before cutting the displayed results.

@@ -57,6 +57,7 @@ def test_rerank_recovers_verified_table_before_top_k():
         "bm25": SimpleNamespace(search=lambda **kwargs: [verified]),
     }
     engine.reranker = NeuralReranker()
+    engine.reranker.max_passage_tokens = 0
     engine.reranker._model = SimpleNamespace(rerank=lambda *args, **kwargs: [5.0, 1.0])
 
     selected, = engine.search("What was Services revenue in fiscal 2024?", method="rerank", k=1)

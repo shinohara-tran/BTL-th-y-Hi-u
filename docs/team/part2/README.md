@@ -18,4 +18,6 @@ Các thư mục khác:
 |---|---|---|
 | `final/` | `team_docs_final`, 14.022 chunk | **Bản chính** |
 | `team13/` | `team_docs` bản densefix, 13.137 chunk | E0–E2, cộng phép đo trên bản `team13-fy` có vector Dense bằng 0 |
-| `00_MUC_LUC.md`, `1_bao_cao/`, `2_log/` | Repo gốc, 10 công ty, 8.670 chunk, Qdrant embedded | E0–E3 làm lần đầu. Không so sánh được với số của cả nhóm |
+| `1_bao_cao/`, `2_log/` | Repo gốc, 10 công ty, 8.670 chunk, Qdrant embedded | E0–E3 làm lần đầu. Không so sánh được với số của cả nhóm |
+
+Mục lục và bảng so sánh cả 3 bộ (trước và sau khi sửa Phần 1): `00_MUC_LUC.md`.

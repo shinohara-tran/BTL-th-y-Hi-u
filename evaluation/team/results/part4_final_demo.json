@@ -1,0 +1,511 @@
+{
+  "collection": "team_docs_final",
+  "chunks": 14022,
+  "summary": [
+    {
+      "configuration": "20-full",
+      "samples": 12,
+      "p50_ms": 7449.52,
+      "p95_ms": 9001.45,
+      "correct": 12,
+      "hidden_by_confidence": 0,
+      "same_top5_as_20_full": 12
+    },
+    {
+      "configuration": "10-full",
+      "samples": 12,
+      "p50_ms": 4330.78,
+      "p95_ms": 6301.95,
+      "correct": 12,
+      "hidden_by_confidence": 0,
+      "same_top5_as_20_full": 1
+    },
+    {
+      "configuration": "10-256",
+      "samples": 12,
+      "p50_ms": 2892.81,
+      "p95_ms": 4435.55,
+      "correct": 12,
+      "hidden_by_confidence": 0,
+      "same_top5_as_20_full": 1
+    }
+  ],
+  "per_query": [
+    {
+      "configuration": "20-full",
+      "trial": 1,
+      "case": "aapl-services",
+      "elapsed_ms": 7445.22,
+      "answer": "Services net sales - FY2024: $96,169 million",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9911,
+        0.9821
+      ],
+      "same_top5_as_20_full": true
+    },
+    {
+      "configuration": "20-full",
+      "trial": 1,
+      "case": "aapl-annual",
+      "elapsed_ms": 9001.45,
+      "answer": "Products gross margin percentage - FY2025: 36.8%",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9985
+      ],
+      "same_top5_as_20_full": true
+    },
+    {
+      "configuration": "20-full",
+      "trial": 1,
+      "case": "aapl-quarter",
+      "elapsed_ms": 7508.09,
+      "answer": "Products gross margin percentage - Q3 FY2025: 34.5%",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9995
+      ],
+      "same_top5_as_20_full": true
+    },
+    {
+      "configuration": "20-full",
+      "trial": 1,
+      "case": "jpm-eps",
+      "elapsed_ms": 7327.87,
+      "answer": "Basic earnings per share - FY2024: $19.79 per share",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9992
+      ],
+      "same_top5_as_20_full": true
+    },
+    {
+      "configuration": "20-full",
+      "trial": 1,
+      "case": "lly-revenue",
+      "elapsed_ms": 7054.65,
+      "answer": "Total revenue - FY2024: $45,042.7 million",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9988
+      ],
+      "same_top5_as_20_full": true
+    },
+    {
+      "configuration": "20-full",
+      "trial": 1,
+      "case": "vfs-ev",
+      "elapsed_ms": 8923.29,
+      "answer": "Approximately 46,500 EVs delivered to GSM as of December 31, 2024",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        1.0,
+        0.9999
+      ],
+      "same_top5_as_20_full": true
+    },
+    {
+      "configuration": "20-full",
+      "trial": 2,
+      "case": "aapl-services",
+      "elapsed_ms": 7359.54,
+      "answer": "Services net sales - FY2024: $96,169 million",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9911,
+        0.9821
+      ],
+      "same_top5_as_20_full": true
+    },
+    {
+      "configuration": "20-full",
+      "trial": 2,
+      "case": "aapl-annual",
+      "elapsed_ms": 7283.81,
+      "answer": "Products gross margin percentage - FY2025: 36.8%",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9985
+      ],
+      "same_top5_as_20_full": true
+    },
+    {
+      "configuration": "20-full",
+      "trial": 2,
+      "case": "aapl-quarter",
+      "elapsed_ms": 7453.81,
+      "answer": "Products gross margin percentage - Q3 FY2025: 34.5%",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9995
+      ],
+      "same_top5_as_20_full": true
+    },
+    {
+      "configuration": "20-full",
+      "trial": 2,
+      "case": "jpm-eps",
+      "elapsed_ms": 7267.73,
+      "answer": "Basic earnings per share - FY2024: $19.79 per share",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9992
+      ],
+      "same_top5_as_20_full": true
+    },
+    {
+      "configuration": "20-full",
+      "trial": 2,
+      "case": "lly-revenue",
+      "elapsed_ms": 8776.35,
+      "answer": "Total revenue - FY2024: $45,042.7 million",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9988
+      ],
+      "same_top5_as_20_full": true
+    },
+    {
+      "configuration": "20-full",
+      "trial": 2,
+      "case": "vfs-ev",
+      "elapsed_ms": 7531.56,
+      "answer": "Approximately 46,500 EVs delivered to GSM as of December 31, 2024",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        1.0,
+        0.9999
+      ],
+      "same_top5_as_20_full": true
+    },
+    {
+      "configuration": "10-full",
+      "trial": 1,
+      "case": "aapl-services",
+      "elapsed_ms": 4177.77,
+      "answer": "Services net sales - FY2024: $96,169 million",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9821
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-full",
+      "trial": 1,
+      "case": "aapl-annual",
+      "elapsed_ms": 4308.75,
+      "answer": "Products gross margin percentage - FY2025: 36.8%",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9985
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-full",
+      "trial": 1,
+      "case": "aapl-quarter",
+      "elapsed_ms": 4266.18,
+      "answer": "Products gross margin percentage - Q3 FY2025: 34.5%",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9995
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-full",
+      "trial": 1,
+      "case": "jpm-eps",
+      "elapsed_ms": 4308.66,
+      "answer": "Basic earnings per share - FY2024: $19.79 per share",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9992
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-full",
+      "trial": 1,
+      "case": "lly-revenue",
+      "elapsed_ms": 4980.7,
+      "answer": "Total revenue - FY2024: $45,042.7 million",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9988
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-full",
+      "trial": 1,
+      "case": "vfs-ev",
+      "elapsed_ms": 4640.52,
+      "answer": "Approximately 46,500 EVs delivered to GSM as of December 31, 2024",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        1.0,
+        0.9999
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-full",
+      "trial": 2,
+      "case": "aapl-services",
+      "elapsed_ms": 4284.41,
+      "answer": "Services net sales - FY2024: $96,169 million",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9821
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-full",
+      "trial": 2,
+      "case": "aapl-annual",
+      "elapsed_ms": 4369.45,
+      "answer": "Products gross margin percentage - FY2025: 36.8%",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9985
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-full",
+      "trial": 2,
+      "case": "aapl-quarter",
+      "elapsed_ms": 4438.73,
+      "answer": "Products gross margin percentage - Q3 FY2025: 34.5%",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9995
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-full",
+      "trial": 2,
+      "case": "jpm-eps",
+      "elapsed_ms": 4352.82,
+      "answer": "Basic earnings per share - FY2024: $19.79 per share",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9992
+      ],
+      "same_top5_as_20_full": true
+    },
+    {
+      "configuration": "10-full",
+      "trial": 2,
+      "case": "lly-revenue",
+      "elapsed_ms": 4269.32,
+      "answer": "Total revenue - FY2024: $45,042.7 million",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9988
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-full",
+      "trial": 2,
+      "case": "vfs-ev",
+      "elapsed_ms": 6301.95,
+      "answer": "Approximately 46,500 EVs delivered to GSM as of December 31, 2024",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        1.0,
+        0.9999
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-256",
+      "trial": 1,
+      "case": "aapl-services",
+      "elapsed_ms": 2837.58,
+      "answer": "Services net sales - FY2024: $96,169 million",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9941
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-256",
+      "trial": 1,
+      "case": "aapl-annual",
+      "elapsed_ms": 2932.86,
+      "answer": "Products gross margin percentage - FY2025: 36.8%",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9964
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-256",
+      "trial": 1,
+      "case": "aapl-quarter",
+      "elapsed_ms": 2892.54,
+      "answer": "Products gross margin percentage - Q3 FY2025: 34.5%",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9995
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-256",
+      "trial": 1,
+      "case": "jpm-eps",
+      "elapsed_ms": 2856.08,
+      "answer": "Basic earnings per share - FY2024: $19.79 per share",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9993
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-256",
+      "trial": 1,
+      "case": "lly-revenue",
+      "elapsed_ms": 2893.07,
+      "answer": "Total revenue - FY2024: $45,042.7 million",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9983
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-256",
+      "trial": 1,
+      "case": "vfs-ev",
+      "elapsed_ms": 2989.47,
+      "answer": "Approximately 46,500 EVs delivered to GSM as of December 31, 2024",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        1.0,
+        0.9928
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-256",
+      "trial": 2,
+      "case": "aapl-services",
+      "elapsed_ms": 2876.36,
+      "answer": "Services net sales - FY2024: $96,169 million",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9941
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-256",
+      "trial": 2,
+      "case": "aapl-annual",
+      "elapsed_ms": 2807.03,
+      "answer": "Products gross margin percentage - FY2025: 36.8%",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9964
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-256",
+      "trial": 2,
+      "case": "aapl-quarter",
+      "elapsed_ms": 2888.7,
+      "answer": "Products gross margin percentage - Q3 FY2025: 34.5%",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9995
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-256",
+      "trial": 2,
+      "case": "jpm-eps",
+      "elapsed_ms": 4435.55,
+      "answer": "Basic earnings per share - FY2024: $19.79 per share",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9993
+      ],
+      "same_top5_as_20_full": true
+    },
+    {
+      "configuration": "10-256",
+      "trial": 2,
+      "case": "lly-revenue",
+      "elapsed_ms": 2958.26,
+      "answer": "Total revenue - FY2024: $45,042.7 million",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        0.9983
+      ],
+      "same_top5_as_20_full": false
+    },
+    {
+      "configuration": "10-256",
+      "trial": 2,
+      "case": "vfs-ev",
+      "elapsed_ms": 2940.07,
+      "answer": "Approximately 46,500 EVs delivered to GSM as of December 31, 2024",
+      "correct": true,
+      "hidden_by_confidence": false,
+      "correct_candidate_confidence": [
+        1.0,
+        0.9928
+      ],
+      "same_top5_as_20_full": false
+    }
+  ]
+}

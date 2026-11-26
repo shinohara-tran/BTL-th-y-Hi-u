@@ -102,10 +102,12 @@ class SearchEngine:
     ) -> List[SearchResult]:
         """Executes search with a specified retrieval configuration or neural reranking."""
         if method == "rerank":
-            # Retrieve initial hybrid candidates from BM25+Dense and SPLADE+Dense
+            configured_limit = self.reranker.candidate_limit
+            budget = max(k, configured_limit) if configured_limit else max(k * 3, 20)
+            # Retrieve initial hybrid candidates from SPLADE+Dense.
             base_candidates = self.retrievers["sparse_dense"].search(
                 query=query,
-                k=max(k * 3, 20),
+                k=budget,
                 filters=filters,
                 prefetch_k=prefetch_k,
             )
@@ -121,11 +123,15 @@ class SearchEngine:
                     filters=filters,
                 )
                 existing = {result.chunk_id for result in base_candidates}
-                base_candidates.extend(
+                verified_candidates = [
                     result for result in table_candidates
                     if result.chunk_id not in existing
                     and AnswerExtractor.extract(query, result.text).exact_answer
-                )
+                ]
+                if configured_limit:
+                    base_candidates = (verified_candidates + base_candidates)[:budget]
+                else:
+                    base_candidates.extend(verified_candidates)
             # Rerank candidates with Cross-Feature Neural Scoring
             return self.reranker.rerank(query=query, results=base_candidates, top_k=k)
 

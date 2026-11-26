@@ -72,7 +72,7 @@ class AnswerExtractor:
             if cls.services_sales_year(query):
                 fact = cls._extract_services_sales(query, body)
             elif cls._gross_margin_segment(query):
-                fact = cls._extract_gross_margin_rate(query, body)
+                fact = cls._extract_gross_margin_rate(query, body) or cls._extract_margin_rows(query, body)
             else:
                 fact = cls._extract_annual_statement_value(query, body)
             if fact is None:
@@ -209,7 +209,10 @@ class AnswerExtractor:
                 suffix = "%"
             elif cls.services_sales_year(query):
                 if metric not in {"services net sales", "services revenue"} and not (
-                    metric == "services" and re.search(r"\b(?:net sales|revenue) by category\b", context)
+                    metric == "services" and (
+                        re.search(r"\b(?:net sales|revenue) by category\b", context)
+                        or re.match(r"Total net sales:.*Unit: millions of USD\.$", body[body.index(row)+len(row):].lstrip("\n"), re.I | re.M)
+                    )
                 ):
                     continue
                 title = "Services net sales"
@@ -375,6 +378,35 @@ class AnswerExtractor:
             query, re.I,
         )
         return match[1].capitalize() if match else None
+
+    @classmethod
+    def _extract_margin_rows(cls, query: str, body: str) -> Optional[Tuple[str, str]]:
+        year, kind = requested_period(query)
+        segment = cls._gross_margin_segment(query)
+        table = re.search(
+            rf"^Total gross margin: ([^\n]+)\. Unit: [^\n]+\n"
+            rf"Gross margin percentage:\n(?:Products,[^\n]+\n)?({segment},[^\n]+)",
+            body, re.I | re.M,
+        )
+        if not table:
+            return None
+        columns = [pair.partition(" = ")[0].strip() for pair in table[1].split(";")]
+        values = re.findall(r"(\d+(?:\.\d+)?),\s*%", table[2])
+        if len(columns) != len(values):
+            return None
+        if kind != "annual":
+            ordinal = ("first", "second", "third", "fourth")[int(kind) - 1]
+            if not re.search(rf"\b(?:products|services) gross margin(?: percentage)? [^\n.]*\b{ordinal} quarter of {year}\b", body, re.I):
+                return None
+        answers = [
+            value for column, value in zip(columns, values)
+            if (column == year if kind == "annual" else
+                re.fullmatch(rf"(?:Three|3) Months Ended [A-Za-z]+ \d{{1,2}},\s*{year}", column, re.I))
+        ]
+        if len(answers) != 1:
+            return None
+        label = f"FY{year}" if kind == "annual" else f"Q{kind} FY{year}"
+        return f"{segment} gross margin percentage - {label}: {answers[0]}%", table[2]
 
     @classmethod
     def _extract_gross_margin_rate(cls, query: str, body: str) -> Optional[Tuple[str, str]]:

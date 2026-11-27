@@ -34,11 +34,9 @@ def metric_request(query, company='', ticker=''):
     # Remove an explicitly possessive entity, not a hardcoded company list.
     q = re.sub(r"(?<=was )[^?]+?'s\s+|(?<=were )[^?]+?'s\s+", '', q)
     issuer = short_name(company) if company else ''
-    # A question may use the first distinctive word of a multiword legal name
-    # ("JPMorgan" for "JPMorgan Chase & Co."). Reuse the query parser's aliases.
+    # Reuse explicit query-parser aliases; a leading legal-name token can also
+    # be a metric qualifier (e.g. "Taiwan revenue" or "Advanced revenue").
     names = {company, issuer, ticker, *EXTRA_ALIASES.get(ticker.upper(), [])}
-    if issuer and len(issuer.split()) > 1 and len(issuer.split()[0]) >= 4:
-        names.add(issuer.split()[0])
     for name in sorted(names, key=len, reverse=True):
         if name:
             q = re.sub(r'\b' + re.escape(name.lower()) + r'\b', '', q)

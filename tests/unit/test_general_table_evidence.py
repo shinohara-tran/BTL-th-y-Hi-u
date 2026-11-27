@@ -3,6 +3,7 @@ import unittest
 import json
 from pathlib import Path
 from hybrid_search.retrieval.extractor import AnswerExtractor as E
+from hybrid_search.retrieval.table_evidence import metric_request
 
 
 class GeneralTableEvidenceTests(unittest.TestCase):
@@ -41,6 +42,19 @@ class GeneralTableEvidenceTests(unittest.TestCase):
                 case = by_ticker[ticker]
                 answer = E.extract(query, case['text'], company=case['company'], ticker=ticker)
                 self.assertTrue(answer.exact_answer.endswith(case['expected_suffix']), answer.exact_answer)
+
+    def test_name_prefix_is_not_removed_from_metric(self):
+        # The first word of a legal name can describe a distinct table row.
+        for query, company, ticker, qualifier in (
+            ('TSMC Taiwan revenue FY2024', 'Taiwan Semiconductor Manufacturing Company', 'TSM', 'taiwan'),
+            ('AMD Advanced revenue FY2024', 'Advanced Micro Devices, Inc.', 'AMD', 'advanced'),
+        ):
+            with self.subTest(query=query):
+                request = metric_request(query, company, ticker)
+                self.assertIsNotNone(request)
+                self.assertIn(qualifier, request[0])
+                self.assertEqual(E.extract(query, 'Revenue: 2024 = 12. Unit: millions of USD.',
+                                           company=company, ticker=ticker).exact_answer, '')
 
     def extract(self, query, rows, header='10-K FY2025'):
         return E.extract(query, f'[{header}]\n\n{rows}')

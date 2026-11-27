@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import re
 
+from hybrid_search.retrieval.query_parser import EXTRA_ALIASES, short_name
+
 ROW = re.compile(r"^(.+):\s+(.+?)\.\s+Unit:\s+(.+?)\.?$")
 NUMBER = re.compile(r"(?:US\$|\$|USD\s*)?\s*(\(?-?\d[\d,]*(?:\.\d+)?\)?)\s*(%)?", re.I)
 
@@ -31,7 +33,13 @@ def metric_request(query, company='', ticker=''):
         return None
     # Remove an explicitly possessive entity, not a hardcoded company list.
     q = re.sub(r"(?<=was )[^?]+?'s\s+|(?<=were )[^?]+?'s\s+", '', q)
-    for name in (company, ticker):
+    issuer = short_name(company) if company else ''
+    # A question may use the first distinctive word of a multiword legal name
+    # ("JPMorgan" for "JPMorgan Chase & Co."). Reuse the query parser's aliases.
+    names = {company, issuer, ticker, *EXTRA_ALIASES.get(ticker.upper(), [])}
+    if issuer and len(issuer.split()) > 1 and len(issuer.split()[0]) >= 4:
+        names.add(issuer.split()[0])
+    for name in sorted(names, key=len, reverse=True):
         if name:
             q = re.sub(r'\b' + re.escape(name.lower()) + r'\b', '', q)
     q = re.sub(r'\b(?:first|second|third|fourth) quarter\b|\bq[1-4]\b', '', q)

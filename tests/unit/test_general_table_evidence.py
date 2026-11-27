@@ -25,6 +25,23 @@ class GeneralTableEvidenceTests(unittest.TestCase):
                 else:
                     self.assertEqual(answer.exact_answer, '')
 
+    def test_short_issuer_queries_on_real_final_chunks(self):
+        cases = json.loads((Path(__file__).parents[1] / 'fixtures/part4_final_rows.json').read_text(encoding='utf-8'))
+        demos = json.loads((Path(__file__).parents[1] / 'fixtures/part4_demo_rows.json').read_text(encoding='utf-8'))
+        by_ticker = {case['ticker']: case for case in cases}
+        by_ticker['AAPL'] = next(case for case in demos if 'Services net sales' in case['query'])
+        queries = {
+            'JPM': 'JPMorgan basic EPS FY2024',
+            'AAPL': 'Apple Services net sales FY2024',
+            'LLY': 'Eli Lilly total revenue FY2024',
+            'NVDA': 'NVIDIA basic weighted average shares FY2025',
+        }
+        for ticker, query in queries.items():
+            with self.subTest(ticker=ticker):
+                case = by_ticker[ticker]
+                answer = E.extract(query, case['text'], company=case['company'], ticker=ticker)
+                self.assertTrue(answer.exact_answer.endswith(case['expected_suffix']), answer.exact_answer)
+
     def extract(self, query, rows, header='10-K FY2025'):
         return E.extract(query, f'[{header}]\n\n{rows}')
 

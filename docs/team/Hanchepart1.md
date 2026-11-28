@@ -65,8 +65,18 @@ pytest -q tests/unit
 | part1 | sparse_dense | - | - | - | - | 0.861 | 0.017 | - | 371.3 | 7cbbe5c | BAAI/bge-small-en-v1.5 |
 | part1 | rerank | - | - | - | - | 0.878 | 0.025 | - | 43951.0 | 7cbbe5c | BAAI/bge-small-en-v1.5 |
 
+- **Bảng kết quả đầy đủ trên bộ nhãn hoàn chỉnh (`evaluation/team/results/team.md`, 24 câu hỏi, 603 cặp nhãn):**
+
+| Method | mrr | ndcg@10 | recall@10 | p@10 | company@5 | dup@5 | unjudged@10 | p50 ms | p95 ms |
+|---|---|---|---|---|---|---|---|---|---|
+| bm25 | 0.823 | 0.617 | 0.455 | 0.679 | 0.817 | 0.075 | 0.000 | 45.0 | 78.7 |
+| dense | 0.824 | 0.607 | 0.420 | 0.650 | 0.800 | 0.050 | 0.000 | 182.4 | 248.6 |
+| bm25_dense | 0.853 | 0.659 | 0.475 | 0.704 | 0.835 | 0.033 | 0.000 | 170.3 | 236.4 |
+| sparse | 0.944 | 0.742 | 0.562 | 0.763 | 0.861 | 0.033 | 0.000 | 354.8 | 464.6 |
+| sparse_dense | 0.921 | 0.739 | 0.547 | 0.767 | 0.852 | 0.017 | 0.000 | 811.6 | 1111.4 |
+| rerank | 0.939 | 0.726 | 0.547 | 0.767 | 0.870 | 0.033 | 0.000 | 8981.4 | 10161.5 |
+
 **Nhận xét:**
-- Các chỉ số `mrr`, `ndcg@10`, `recall@10`, `p@10` hiện đang là `-` do bộ nhãn chuẩn từ người chấm (`q001–q024`) đang trong quá trình hoàn thiện.
 - Tỉ lệ trùng lặp `dup@5` giảm đồng loạt trên cả 6 phương pháp (nổi bật: `sparse_dense` giảm từ `0.050` xuống `0.017`; `bm25_dense` giảm từ `0.067` xuống `0.033`; `rerank` giảm từ `0.067` xuống `0.025`).
 - Độ chính xác đúng công ty `company@5` tăng ở `dense` (`0.783 → 0.800`), `bm25_dense` (`0.817 → 0.835`), `sparse_dense` (`0.852 → 0.861`), và `rerank` (`0.843 → 0.878`).
 - Độ trễ `p50` của BM25 giảm từ `2094.1 ms` xuống `39.8 ms` sau khi sửa lỗi phân giải `localhost` sang `127.0.0.1` trên Windows.

@@ -10,7 +10,7 @@ Bài toán: chuyên viên phân tích cần tìm nhanh đúng đoạn trong báo
 |---|---|---|---|
 | 1. Dữ liệu và chia đoạn | Bình | Đếm token thật, trần 480 token, đổi bảng thành câu (row-to-text), gắn năm cho số liệu | [docs/team/Hanchepart1.md](docs/team/Hanchepart1.md) |
 | 2. Vector BM25 / Dense / SPLADE | Huy Hoàng | Bỏ IDF thừa của SPLADE, kiểm tra BM25, thử bge-base, phát hiện lỗi vector Dense bằng 0 | [docs/team/part2/00_MUC_LUC.md](docs/team/part2/00_MUC_LUC.md) |
-| 3. Hiểu câu hỏi, RRF có trọng số, lọc trùng | Trần Hoàng (nhóm trưởng) | Nhận diện công ty và đối thủ trong câu hỏi, RRF có trọng số theo loại câu hỏi, lọc đoạn trùng nội dung | `src/hybrid_search/retrieval/smart_hybrid.py` |
+| 3. Hiểu câu hỏi, RRF có trọng số, lọc trùng | Trần Hoàng (nhóm trưởng) | Nhận diện công ty và đối thủ trong câu hỏi, RRF có trọng số theo loại câu hỏi, lọc đoạn trùng nội dung | [docs/team/PART3.md](docs/team/PART3.md) |
 | 4. Xếp hạng lại và đọc bảng | Tùng | Cross-encoder rerank (top 10, cắt 256 token), trích con số từ bảng, đóng gói bộ dữ liệu cuối | [docs/team/REPORT_PART4.md](docs/team/REPORT_PART4.md) |
 
 ## Dữ liệu
@@ -63,7 +63,7 @@ Lệnh chạy 24 câu hỏi qua 9 cấu hình và ghi `evaluation/team/results/<
 python -m hybrid_search.cli serve --port 8000
 ```
 
-Mở `http://127.0.0.1:8000`, chọn cấu hình (BM25, Dense, SPLADE, các bản hybrid, Rerank, Smart Hybrid) rồi gõ câu hỏi. Tìm bằng dòng lệnh:
+Mở `http://127.0.0.1:8000`, chọn cấu hình (BM25, Dense, SPLADE, các bản hybrid, Rerank, Smart Hybrid) rồi gõ câu hỏi. Tab Benchmark hiển thị kết quả chính thức đọc từ `evaluation/team/results/team.json`. Tìm bằng dòng lệnh:
 
 ```powershell
 python -m hybrid_search.cli search "Mounjaro revenue in 2024" --method hybrid_plus -k 5
@@ -104,7 +104,7 @@ Nhận xét chính:
 
 - SPLADE có MRR và NDCG cao nhất, mạnh nhất ở câu hỏi số liệu theo năm (NDCG 0,761, trong khi Dense chỉ đạt 0,156).
 - Rerank có company@5 cao nhất (0,870). Thời gian trung vị 2,5 đến 9 giây mỗi câu tùy máy.
-- Phần 3: RRF có trọng số (hybrid_qp_w) tốt hơn bm25_dense ở NDCG trên 14/24 câu. Với 24 câu, khoảng tin cậy bootstrap 95% của mức tăng MRR (+0,063) vẫn chứa 0, nên đây là xu hướng chứ chưa khẳng định được. Lọc trùng (hybrid_plus) đưa dup@5 về 0 nhưng làm giảm NDCG, vì đoạn lặp lại ở báo cáo các năm khác vẫn được tính là đúng.
+- Phần 3: RRF có trọng số (hybrid_qp_w) tốt hơn bm25_dense ở NDCG trên 14/24 câu. Với 24 câu, khoảng tin cậy bootstrap 95% của mức tăng MRR (+0,063, khoảng [−0,040; +0,184], chạy bằng `scripts/team/bootstrap.py`) vẫn chứa 0, nên đây là xu hướng chứ chưa khẳng định được. Lọc trùng (hybrid_plus) đưa dup@5 về 0 nhưng làm giảm NDCG, vì đoạn lặp lại ở báo cáo các năm khác vẫn được tính là đúng.
 - Lỗi đáng kể nhất nhóm phát hiện: trong một bộ dữ liệu trung gian, toàn bộ vector Dense bằng 0, nghi do gắn thẳng thư mục Windows vào Docker. Sau khi tính lại vector, Dense MRR trên benchmark gốc tăng từ 0,211 lên 0,827. `scripts/team/check_dense.py` được viết để bắt lỗi này.
 
 **Chạy lại trên 4 máy.** Bốn thành viên chạy `evaluate.py` độc lập (3 máy Windows, 1 máy Linux). bm25, dense, sparse và hai cấu hình Phần 3 cho số khớp hoàn toàn. Các cấu hình có trộn kết quả lệch dưới 0,02 MRR và khoảng 0,01 NDCG, do tìm kiếm Dense gần đúng (HNSW) xếp các đoạn bằng điểm khác nhau giữa các máy.
@@ -118,7 +118,7 @@ Nhận xét chính:
 
 ## Thư mục của nhóm
 
-- `scripts/team/`: `evaluate.py` (đo), `pool.py` (tạo danh sách cần chấm), `agreement.py` (kappa và gộp nhãn), `check_dense.py` (kiểm tra vector Dense)
-- `evaluation/team/`: câu hỏi, `labels.csv` (603 nhãn), `results/` (kết quả từng lần chạy)
+- `scripts/team/`: `evaluate.py` (đo), `bootstrap.py` (khoảng tin cậy khi so hai cấu hình), `pool.py` (tạo danh sách cần chấm), `agreement.py` (kappa và gộp nhãn), `check_dense.py` (kiểm tra vector Dense)
+- `evaluation/team/`: câu hỏi, `labels.csv` (603 nhãn), `results/` (kết quả từng lần chạy, xem `results/README.md`; kết quả cũ trên dữ liệu lỗi nằm ở `results/archive/`)
 - `src/hybrid_search/retrieval/smart_hybrid.py`: Phần 3
 - `docs/team/`: quy trình làm việc, quy tắc gán nhãn, báo cáo từng phần

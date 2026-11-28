@@ -3,7 +3,7 @@
 Three methods so each step can be measured on its own (ablation):
 
     hybrid_qp     query understanding + upstream server-side RRF (equal weights)
-    hybrid_qp_w   + weighted RRF computed here (BM25 heavier for codes, Dense heavier for long questions)
+    hybrid_qp_w   + weighted RRF (k=60) computed here: BM25 0.7 for questions with codes, 0.5/0.5 otherwise
     hybrid_plus   + removal of near-duplicate chunks (same boilerplate repeated across years and filings)
 """
 

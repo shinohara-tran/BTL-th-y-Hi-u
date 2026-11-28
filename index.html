@@ -120,7 +120,7 @@
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
         </span>
-        <span id="db-points-text" class="font-mono text-slate-900 dark:text-white font-bold text-xs">8,609 Indexed Chunks</span>
+        <span id="db-points-text" class="font-mono text-slate-900 dark:text-white font-bold text-xs">14,022 Indexed Chunks</span>
       </div>
 
       <!-- Clean GitHub Repo Button -->
@@ -323,13 +323,13 @@
             <i data-lucide="compass" class="w-6 h-6"></i>
           </div>
           <h3 class="text-base font-bold text-slate-900 dark:text-white uppercase tracking-wider">Interactive Multi-Vector Research Console</h3>
-          <p class="text-sm text-slate-500 dark:text-zinc-400 max-w-lg mx-auto leading-relaxed">Select any benchmark showcase preset query above or enter natural language questions to query 8,609 vectorized SEC filing chunks in Qdrant.</p>
+          <p class="text-sm text-slate-500 dark:text-zinc-400 max-w-lg mx-auto leading-relaxed">Select any benchmark showcase preset query above or enter natural language questions to query 14,022 vectorized SEC filing chunks in Qdrant.</p>
         </div>
 
         <!-- Loading Spinner -->
         <div id="loading-state" class="hidden p-12 text-center space-y-3">
           <div class="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p class="text-sm font-mono text-slate-600 dark:text-zinc-400">Querying 8,609 vectorized chunks with Qdrant...</p>
+          <p class="text-sm font-mono text-slate-600 dark:text-zinc-400">Querying 14,022 vectorized chunks with Qdrant...</p>
         </div>
 
         <!-- Direct Extracted Answer Hero Card (For Single Method Search) -->
@@ -374,10 +374,10 @@
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">SEC EDGAR Filings Corpus & Chunking Anatomy</h2>
-            <p class="text-sm text-slate-500 dark:text-zinc-400 mt-1">Detailed breakdown of all 8,609 chunks indexed from 10-K, 10-Q, 20-F, and 6-K regulatory filings spanning <strong>FY2023 – FY2025</strong>.</p>
+            <p class="text-sm text-slate-500 dark:text-zinc-400 mt-1">Detailed breakdown of all 14,022 chunks indexed from 10-K, 10-Q, 20-F, and 6-K regulatory filings spanning <strong>FY2023 – FY2025</strong>.</p>
           </div>
           <div class="flex items-center space-x-2">
-            <span class="px-3.5 py-1.5 rounded bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-dark-border font-mono text-xs text-brand-600 dark:text-brand-400 font-bold">8,609 Chunks Total</span>
+            <span class="px-3.5 py-1.5 rounded bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-dark-border font-mono text-xs text-brand-600 dark:text-brand-400 font-bold">14,022 Chunks Total</span>
             <span class="px-3.5 py-1.5 rounded bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-dark-border font-mono text-xs text-blue-600 dark:text-blue-400 font-bold">10 Corporate Filers</span>
           </div>
         </div>
@@ -685,132 +685,66 @@
     <!-- VIEW 4: EMPIRICAL BENCHMARK LEADERBOARD -->
     <!-- ========================================== -->
     <div id="view-benchmark" class="hidden space-y-6">
-      
-      <!-- Benchmark Header Card -->
+
       <div class="p-6 rounded-xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border shadow-sm space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Empirical Benchmark Leaderboard</h2>
-            <p class="text-sm text-slate-500 dark:text-zinc-400 mt-1">Systematic Information Retrieval (IR) evaluation across the 25-query Golden Financial Dataset.</p>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Team Evaluation Results</h2>
+            <p id="bench-subtitle" class="text-sm text-slate-500 dark:text-zinc-400 mt-1">24 hand-labelled questions (603 graded query-chunk pairs) on the final collection. Source: evaluation/team/results/team.json.</p>
           </div>
           <button onclick="runBenchmarkSuite()" id="btn-run-benchmark" class="px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-black font-bold text-sm flex items-center space-x-2 transition-all shadow-md">
-            <i data-lucide="play" class="w-4 h-4 fill-black"></i>
-            <span>Run Benchmark Verification</span>
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            <span>Reload Results</span>
           </button>
         </div>
-
-        <!-- 4 Top Metric Highlight Cards -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
           <div class="p-4 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-dark-border">
-            <div class="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase">Stage-2 Rerank MRR</div>
-            <div class="text-2xl font-bold text-brand-600 dark:text-brand-400 mt-1 font-mono">1.0000</div>
-            <div class="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">Precision Winner (Rank 1 Fact)</div>
+            <div class="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase">Best MRR</div>
+            <div id="card-best-mrr" class="text-2xl font-bold text-brand-600 dark:text-brand-400 mt-1 font-mono">-</div>
+            <div id="card-best-mrr-method" class="text-xs text-slate-500 dark:text-zinc-500 mt-0.5"></div>
           </div>
           <div class="p-4 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-dark-border">
-            <div class="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase">Sparse+Dense Recall@10</div>
-            <div class="text-2xl font-bold text-cyan-600 dark:text-cyan-400 mt-1 font-mono">0.9600</div>
-            <div class="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">Candidate Recall Winner</div>
+            <div class="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase">Best Correct Company@5</div>
+            <div id="card-best-company" class="text-2xl font-bold text-cyan-600 dark:text-cyan-400 mt-1 font-mono">-</div>
+            <div id="card-best-company-method" class="text-xs text-slate-500 dark:text-zinc-500 mt-0.5"></div>
           </div>
           <div class="p-4 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-dark-border">
-            <div class="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase">BM25 p50 Latency</div>
-            <div class="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1 font-mono">2.4ms</div>
-            <div class="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">Inverted Index Speed</div>
+            <div class="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase">Queries</div>
+            <div id="card-queries" class="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1 font-mono">-</div>
+            <div class="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">Hand-labelled, 3 new companies</div>
           </div>
           <div class="p-4 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-dark-border">
             <div class="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase">Corpus Size</div>
-            <div class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1 font-mono">8,609</div>
-            <div class="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">Total Indexed Chunks</div>
+            <div id="card-corpus" class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1 font-mono">-</div>
+            <div id="card-collection" class="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">Total Indexed Chunks</div>
           </div>
         </div>
       </div>
 
-      <!-- Comparative Matrix Table -->
       <div class="rounded-xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border shadow-sm overflow-hidden">
         <div class="p-4 border-b border-slate-200 dark:border-dark-border flex items-center justify-between bg-slate-50 dark:bg-zinc-950">
-          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Comparative Retrieval Matrix (25 Queries × 6 Configurations)</h3>
-          <span class="text-xs text-slate-500 dark:text-zinc-400 font-mono">Sorted by Mean Reciprocal Rank (MRR)</span>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Retrieval Methods on the Team Benchmark</h3>
+          <span class="text-xs text-slate-500 dark:text-zinc-400 font-mono">Sorted by MRR</span>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm text-left">
             <thead class="bg-slate-100 dark:bg-zinc-950 text-slate-600 dark:text-zinc-400 font-semibold border-b border-slate-200 dark:border-dark-border">
               <tr>
-                <th class="py-3.5 px-4">Retrieval Method</th>
+                <th class="py-3.5 px-4">Method</th>
                 <th class="py-3.5 px-4">MRR</th>
-                <th class="py-3.5 px-4">Recall@5</th>
-                <th class="py-3.5 px-4">Recall@10</th>
-                <th class="py-3.5 px-4">HitRate@10</th>
                 <th class="py-3.5 px-4">NDCG@10</th>
+                <th class="py-3.5 px-4">Recall@10</th>
+                <th class="py-3.5 px-4">Correct Company@5</th>
+                <th class="py-3.5 px-4">Duplicates@5</th>
                 <th class="py-3.5 px-4">p50 Latency</th>
-                <th class="py-3.5 px-4">p95 Latency</th>
               </tr>
             </thead>
             <tbody id="benchmark-table-body" class="divide-y divide-slate-200 dark:divide-dark-borderSubtle font-medium text-slate-700 dark:text-zinc-300 font-mono">
-              <tr class="bg-brand-500/10 text-slate-900 dark:text-white">
-                <td class="py-3.5 px-4 font-bold text-brand-600 dark:text-brand-400 flex items-center space-x-2">
-                  <i data-lucide="award" class="w-4 h-4 text-brand-500"></i>
-                  <span>Stage-2 Reranker</span>
-                </td>
-                <td class="py-3.5 px-4 font-bold text-brand-600 dark:text-brand-400">1.0000</td>
-                <td class="py-3.5 px-4">0.8800</td>
-                <td class="py-3.5 px-4 font-bold">0.9600</td>
-                <td class="py-3.5 px-4">1.0000</td>
-                <td class="py-3.5 px-4">0.9780</td>
-                <td class="py-3.5 px-4">38.2ms</td>
-                <td class="py-3.5 px-4">54.1ms</td>
-              </tr>
-              <tr>
-                <td class="py-3.5 px-4 font-bold text-slate-800 dark:text-zinc-200">Sparse + Dense (SPLADE RRF)</td>
-                <td class="py-3.5 px-4">0.9120</td>
-                <td class="py-3.5 px-4">0.8400</td>
-                <td class="py-3.5 px-4 font-bold text-cyan-600 dark:text-cyan-400">0.9600</td>
-                <td class="py-3.5 px-4">0.9600</td>
-                <td class="py-3.5 px-4">0.9240</td>
-                <td class="py-3.5 px-4">22.4ms</td>
-                <td class="py-3.5 px-4">31.6ms</td>
-              </tr>
-              <tr>
-                <td class="py-3.5 px-4 font-bold text-slate-800 dark:text-zinc-200">BM25 + Dense (Lexical RRF)</td>
-                <td class="py-3.5 px-4">0.8940</td>
-                <td class="py-3.5 px-4">0.8000</td>
-                <td class="py-3.5 px-4 font-bold text-cyan-600 dark:text-cyan-400">0.9600</td>
-                <td class="py-3.5 px-4">0.9600</td>
-                <td class="py-3.5 px-4">0.9110</td>
-                <td class="py-3.5 px-4">16.8ms</td>
-                <td class="py-3.5 px-4">24.5ms</td>
-              </tr>
-              <tr>
-                <td class="py-3.5 px-4 font-bold text-slate-800 dark:text-zinc-200">Sparse (SPLADE Expansion)</td>
-                <td class="py-3.5 px-4">0.8560</td>
-                <td class="py-3.5 px-4">0.7600</td>
-                <td class="py-3.5 px-4">0.8800</td>
-                <td class="py-3.5 px-4">0.8800</td>
-                <td class="py-3.5 px-4">0.8650</td>
-                <td class="py-3.5 px-4">18.5ms</td>
-                <td class="py-3.5 px-4">27.2ms</td>
-              </tr>
-              <tr>
-                <td class="py-3.5 px-4 font-bold text-slate-800 dark:text-zinc-200">BM25 (Pure Lexical)</td>
-                <td class="py-3.5 px-4">0.8400</td>
-                <td class="py-3.5 px-4">0.7200</td>
-                <td class="py-3.5 px-4">0.8400</td>
-                <td class="py-3.5 px-4">0.8400</td>
-                <td class="py-3.5 px-4">0.8320</td>
-                <td class="py-3.5 px-4 font-bold text-purple-600 dark:text-purple-400">2.4ms</td>
-                <td class="py-3.5 px-4 font-bold text-purple-600 dark:text-purple-400">4.8ms</td>
-              </tr>
-              <tr>
-                <td class="py-3.5 px-4 font-bold text-slate-800 dark:text-zinc-200">Dense (BGE-Small)</td>
-                <td class="py-3.5 px-4">0.8020</td>
-                <td class="py-3.5 px-4">0.6800</td>
-                <td class="py-3.5 px-4">0.8000</td>
-                <td class="py-3.5 px-4">0.8000</td>
-                <td class="py-3.5 px-4">0.7950</td>
-                <td class="py-3.5 px-4">12.1ms</td>
-                <td class="py-3.5 px-4">18.3ms</td>
-              </tr>
+              <tr><td colspan="7" class="py-3.5 px-4 text-slate-500">Loading results...</td></tr>
             </tbody>
           </table>
         </div>
+        <p class="p-4 text-xs text-slate-500 dark:text-zinc-400 border-t border-slate-200 dark:border-dark-border">MRR: rank of the first relevant chunk (1 = always first). NDCG@10: quality of the whole top 10. Correct Company@5 and Duplicates@5 are measured in the top 5. Latency depends on the machine (measured on the team lead's CPU).</p>
       </div>
 
     </div>
@@ -1231,6 +1165,9 @@
       if (tabId === 'topology') {
         renderDiagram(activeDiagId);
       }
+      if (tabId === 'benchmark' && !benchmarkLoaded) {
+        runBenchmarkSuite();
+      }
     }
 
     function showDiag(diagId) {
@@ -1534,27 +1471,47 @@
       document.getElementById('modal-context').classList.add('hidden');
     }
 
+    let benchmarkLoaded = false;
+
     async function runBenchmarkSuite() {
       const btn = document.getElementById('btn-run-benchmark');
+      const body = document.getElementById('benchmark-table-body');
       btn.disabled = true;
-      btn.innerHTML = '<div class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div><span>Verifying Suite...</span>';
-
       try {
         const res = await fetch(`${API_BASE}/api/benchmark`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ k: 10, fast_mode: true })
         });
-
-        if (res.ok) {
-          const data = await res.json();
-          alert("Empirical benchmark suite verified across all 25 queries! Review the updated results table.");
-        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const fmt = v => (v === null || v === undefined) ? '-' : Number(v).toFixed(3);
+        const rows = data.metrics || [];
+        const bestMrr = rows.reduce((a, b) => ((b.mrr || 0) > (a.mrr || 0) ? b : a), rows[0] || {});
+        const bestCo = rows.reduce((a, b) => ((b.company_at_5 || 0) > (a.company_at_5 || 0) ? b : a), rows[0] || {});
+        body.innerHTML = rows.map(m => `
+              <tr class="${m.method === bestMrr.method ? 'bg-brand-500/10 text-slate-900 dark:text-white' : ''}">
+                <td class="py-3.5 px-4 font-bold text-slate-800 dark:text-zinc-200">${m.method}</td>
+                <td class="py-3.5 px-4">${fmt(m.mrr)}</td>
+                <td class="py-3.5 px-4">${fmt(m.ndcg_at_10)}</td>
+                <td class="py-3.5 px-4">${fmt(m.recall_at_10)}</td>
+                <td class="py-3.5 px-4">${fmt(m.company_at_5)}</td>
+                <td class="py-3.5 px-4">${fmt(m.dup_at_5)}</td>
+                <td class="py-3.5 px-4">${m.latency_p50_ms == null ? '-' : (m.latency_p50_ms / 1000).toFixed(2) + 's'}</td>
+              </tr>`).join('');
+        const s = data.summary || {};
+        document.getElementById('card-best-mrr').textContent = fmt(bestMrr.mrr);
+        document.getElementById('card-best-mrr-method').textContent = bestMrr.method || '';
+        document.getElementById('card-best-company').textContent = fmt(bestCo.company_at_5);
+        document.getElementById('card-best-company-method').textContent = bestCo.method || '';
+        document.getElementById('card-queries').textContent = s.n_queries ?? '-';
+        document.getElementById('card-corpus').textContent = s.corpus_chunks ? Number(s.corpus_chunks).toLocaleString('en-US') : '-';
+        document.getElementById('card-collection').textContent = s.collection ? `Collection: ${s.collection}` : 'Total Indexed Chunks';
+        benchmarkLoaded = true;
       } catch (err) {
-        alert("Benchmark verification completed.");
+        body.innerHTML = `<tr><td colspan="7" class="py-3.5 px-4 text-red-500">Could not load results: ${err.message}</td></tr>`;
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i data-lucide="play" class="w-4 h-4 fill-black"></i><span>Run Benchmark Verification</span>';
         lucide.createIcons();
       }
     }

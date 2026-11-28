@@ -269,105 +269,43 @@ def create_app(engine: Optional[SearchEngine] = None) -> FastAPI:
 
     @app.post("/api/benchmark")
     async def run_benchmark(req: BenchmarkRequest) -> Dict[str, Any]:
-        """Returns empirical benchmark evaluation matrix with fast validation execution."""
-        # Verified canonical empirical benchmark matrix across the 25-query Golden Financial Dataset
-        benchmark_results = {
+        """Return the team's official evaluation (evaluation/team/results/team.json).
+
+        Team fix: upstream returned a hard-coded matrix (MRR 1.0 on 8,609 chunks) that was never
+        measured. This endpoint now serves the numbers produced by scripts/team/evaluate.py.
+        """
+        import json
+
+        results_path = get_project_root() / "evaluation" / "team" / "results" / "team.json"
+        if not results_path.exists():
+            raise HTTPException(status_code=404, detail=f"{results_path} not found; run scripts/team/evaluate.py")
+        data = json.loads(results_path.read_text(encoding="utf-8-sig"))
+        meta = data.get("meta", {})
+        metrics = []
+        for method, entry in data.get("methods", {}).items():
+            summary = entry.get("summary", {})
+            metrics.append({
+                "method": method,
+                "mrr": summary.get("mrr"),
+                "ndcg_at_10": summary.get("ndcg@10"),
+                "recall_at_10": summary.get("recall@10"),
+                "company_at_5": summary.get("company@5"),
+                "dup_at_5": summary.get("dup@5"),
+                "latency_p50_ms": summary.get("latency_p50_ms"),
+            })
+        metrics.sort(key=lambda m: m["mrr"] or 0.0, reverse=True)
+        return {
             "summary": {
-                "dataset_size": 25,
-                "k": req.k,
-                "total_configurations": 6,
-                "corpus_chunks": 8609,
-                "status": "completed",
+                "source": "evaluation/team/results/team.json",
+                "n_queries": meta.get("n_queries"),
+                "corpus_chunks": meta.get("n_points"),
+                "collection": meta.get("collection"),
+                "timestamp": meta.get("timestamp"),
+                "machine": meta.get("machine"),
+                "total_configurations": len(metrics),
             },
-            "metrics": [
-                {
-                    "method": "rerank",
-                    "name": "Stage-2 Reranker",
-                    "badge": "Precision Champion",
-                    "mrr": 1.0000,
-                    "recall_at_5": 0.8800,
-                    "recall_at_10": 0.9600,
-                    "hit_rate_at_10": 1.0000,
-                    "ndcg_at_10": 0.9780,
-                    "latency_p50": 38.2,
-                    "latency_p95": 54.1,
-                    "is_winner": True,
-                },
-                {
-                    "method": "sparse_dense",
-                    "name": "Sparse + Dense (SPLADE RRF)",
-                    "badge": "Recall Champion",
-                    "mrr": 0.9120,
-                    "recall_at_5": 0.8400,
-                    "recall_at_10": 0.9600,
-                    "hit_rate_at_10": 0.9600,
-                    "ndcg_at_10": 0.9240,
-                    "latency_p50": 22.4,
-                    "latency_p95": 31.6,
-                    "is_winner": False,
-                },
-                {
-                    "method": "bm25_dense",
-                    "name": "BM25 + Dense (Lexical RRF)",
-                    "badge": "Hybrid Baseline",
-                    "mrr": 0.8940,
-                    "recall_at_5": 0.8000,
-                    "recall_at_10": 0.9600,
-                    "hit_rate_at_10": 0.9600,
-                    "ndcg_at_10": 0.9110,
-                    "latency_p50": 16.8,
-                    "latency_p95": 24.5,
-                    "is_winner": False,
-                },
-                {
-                    "method": "sparse",
-                    "name": "Sparse (SPLADE Expansion)",
-                    "badge": "Vocabulary Expander",
-                    "mrr": 0.8560,
-                    "recall_at_5": 0.7600,
-                    "recall_at_10": 0.8800,
-                    "hit_rate_at_10": 0.8800,
-                    "ndcg_at_10": 0.8650,
-                    "latency_p50": 18.5,
-                    "latency_p95": 27.2,
-                    "is_winner": False,
-                },
-                {
-                    "method": "bm25",
-                    "name": "BM25 (Pure Lexical)",
-                    "badge": "Latency Champion",
-                    "mrr": 0.8400,
-                    "recall_at_5": 0.7200,
-                    "recall_at_10": 0.8400,
-                    "hit_rate_at_10": 0.8400,
-                    "ndcg_at_10": 0.8320,
-                    "latency_p50": 2.4,
-                    "latency_p95": 4.8,
-                    "is_winner": False,
-                },
-                {
-                    "method": "dense",
-                    "name": "Dense (BGE-Small)",
-                    "badge": "Semantic Baseline",
-                    "mrr": 0.8020,
-                    "recall_at_5": 0.6800,
-                    "recall_at_10": 0.8000,
-                    "hit_rate_at_10": 0.8000,
-                    "ndcg_at_10": 0.7950,
-                    "latency_p50": 12.1,
-                    "latency_p95": 18.3,
-                    "is_winner": False,
-                }
-            ],
-            "categories": [
-                {"name": "Exact Terminology (GAAP / ASC)", "queries": 5, "best_method": "bm25 / rerank", "best_mrr": 1.0000},
-                {"name": "Conceptual Semantic Questions", "queries": 5, "best_method": "dense / rerank", "best_mrr": 1.0000},
-                {"name": "Product Architecture & SKUs", "queries": 5, "best_method": "bm25 / rerank", "best_mrr": 1.0000},
-                {"name": "Technical Synonyms & Expansion", "queries": 5, "best_method": "sparse / sparse_dense", "best_mrr": 0.9500},
-                {"name": "Tabular & Temporal Facts", "queries": 5, "best_method": "rerank (Stage-2)", "best_mrr": 1.0000},
-            ]
+            "metrics": metrics,
         }
-        return benchmark_results
 
     # Static file serving
     root_dir = get_project_root()

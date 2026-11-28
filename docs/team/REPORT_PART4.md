@@ -1,9 +1,9 @@
 # Báo cáo Phần 4 — Reranking và trích xuất đáp án
 
 **Người làm:** Thanh Tùng  
-**Nhánh:** `part4`  
-**Dữ liệu dùng để kiểm tra:** `team_docs`, 13 công ty, 56 hồ sơ, 13.137 chunk.  
-**Commit của bộ dữ liệu đã sửa nhãn năm:** `fb63299`. Các sửa đổi sau đó được kiểm tra trên bản làm việc local.
+**Nhánh sửa bằng chứng:** `fix/part4-period-evidence`  
+**Dữ liệu đánh giá chung:** `team_docs_final`, 13 công ty, 14.022 chunk.  
+**Lịch sử:** các kiểm tra ban đầu dùng `team_docs` với 13.137 chunk, mốc sửa nhãn năm `fb63299`; số liệu đánh giá chung tại mục 4 dùng bộ cuối.
 
 ## 1. Điểm yếu đã xử lý
 
@@ -33,7 +33,7 @@ Chạy các test liên quan từ checkout `part4` đã cài dependencies.
 python -m pytest -q tests/unit/test_answer_evidence.py tests/unit/test_team_eval.py tests/unit/test_edgar_client.py
 ```
 
-Khi nhóm đã chốt nhãn, đặt `$queries`, `$labels` và `$results` thành đường dẫn tuyệt đối dùng chung. Hai checkout cần kết nối tới cùng Qdrant `team_docs` và dùng cùng cấu hình đánh giá.
+Để đo riêng trước/sau một bản sửa, đặt `$queries`, `$labels` và `$results` thành đường dẫn tuyệt đối dùng chung. Hai checkout cần kết nối tới cùng Qdrant `team_docs_final` và dùng cùng cấu hình đánh giá. Các lệnh dưới đây là hướng dẫn đo riêng trên split dev, không phải nguồn của bảng `split=all` tại mục 4.
 
 ```powershell
 # Trong checkout main
@@ -48,9 +48,20 @@ python scripts/team/compare.py baseline part4 --method rerank --results-dir $res
 
 ## 4. Kết quả
 
-**Kiểm tra tự động:** 25 test liên quan đã đạt. **Benchmark xếp hạng trước/sau:** chờ file nhãn chung. Bản câu hỏi hiện có 24 câu, gồm 6 dev và 18 test. MRR, nDCG và Recall được điền sau khi chạy với nhãn đã thống nhất.
+**Benchmark theo nhãn chung:** kết quả trong [team.md](../../evaluation/team/results/team.md), chạy trên toàn bộ 24 câu hỏi (`split=all`) và collection `team_docs_final` gồm 14.022 chunk.
 
-### Độ trễ cross-encoder
+| Cấu hình | MRR | NDCG@10 | Recall@10 | company@5 | p50 (ms) | p95 (ms) |
+|---|---:|---:|---:|---:|---:|---:|
+| Nguồn ứng viên `sparse_dense` | 0,921 | 0,739 | 0,547 | 0,852 | 811,6 | 1.111,4 |
+| `rerank` | 0,939 | 0,726 | 0,547 | 0,870 | 8.981,4 | 10.161,5 |
+
+So với nguồn ứng viên, rerank tăng MRR từ 0,921 lên 0,939 và company@5 từ 0,852 lên 0,870 (cao nhất trong các cấu hình của bảng); Recall@10 giữ nguyên ở độ chính xác ba chữ số thập phân, còn NDCG@10 giảm từ 0,739 xuống 0,726. Vì vậy không kết luận rerank tốt hơn trên mọi chỉ số. Đây là so sánh hai cấu hình trong lần đánh giá chung, không phải phép đo trước/sau riêng cho bản sửa bằng chứng kỳ báo cáo.
+
+Độ trễ p50 của rerank trên máy chạy `team.md` khoảng 9 giây/câu. Theo kết quả chạy lại mà nhóm tổng hợp, máy Huy và Tùng khoảng 2,5–2,8 giây/câu; thời gian phụ thuộc máy và môi trường chạy. Không thay số đo của `team.md` bằng số của máy khác. Các số liệu benchmark này không phải kết quả chạy mới sau các commit sửa câu hỏi ngắn.
+
+**Sửa câu hỏi ngắn:** commit `fa1be10` bổ sung tên ngắn và alias công ty trong `metric_request()` để hỗ trợ các câu như `JPMorgan basic EPS FY2024`, `Apple Services net sales FY2024`, `Eli Lilly total revenue FY2024` và `NVIDIA basic weighted average shares FY2025`. Commit `3718c17` bỏ việc tự xóa từ đầu tên công ty, nhằm giữ phạm vi như `Taiwan` trong câu hỏi `TSMC Taiwan revenue FY2024`. Cần phân biệt kiểm tra hồi quy các trường hợp này với benchmark chung ở trên.
+
+### Phép đo cross-encoder ban đầu (20 đoạn, trước tối ưu top 10 / 256 token)
 
 Mỗi cấu hình được đo 12 lượt sau làm nóng trên bốn câu AAPL, JPM, LLY và VFS, với 20 đoạn cố định mỗi câu. Thời gian trong bảng là thời gian chấm điểm của cross-encoder.
 
@@ -60,7 +71,7 @@ Mỗi cấu hình được đo 12 lượt sau làm nóng trên bốn câu AAPL, 
 | 8 | 6.768,85 | 8.259,69 | 12/12 |
 | 16 | 6.801,66 | 8.238,39 | 12/12 |
 
-Giữ batch 2 cho demo vì có độ trễ trung vị thấp nhất trong phép thử. Batch 16 có p95 thấp hơn khoảng 218 ms. Số đo gốc nằm ở [rerank_batches.json](../../evaluation/team/results/rerank_batches.json).
+Trong phép thử ban đầu, batch 2 có độ trễ trung vị thấp nhất; batch 16 có p95 thấp hơn khoảng 218 ms. Số đo gốc nằm ở [rerank_batches.json](../../evaluation/team/results/rerank_batches.json). Đây là thời gian riêng của cross-encoder với 20 đoạn, không phải độ trễ toàn câu của cấu hình demo đã tối ưu rerank top 10 và giới hạn mỗi đoạn khoảng 256 token.
 
 ## 5. Demo
 
@@ -78,4 +89,4 @@ Các ca dưới đây đã được xác nhận trên web hoặc API. Cột trư
 
 Các quy tắc trích số đã được kiểm tra trên các dạng câu và cấu trúc báo cáo nêu trên. Confidence hiển thị là điểm của hệ thống. Bảng chấm theo nhãn đo chất lượng xếp hạng đoạn, còn tính đúng của số được đối chiếu riêng bằng các ca demo.
 
-Cần bổ sung bảng benchmark có nhãn, ảnh demo gốc và mã commit cuối trước khi chốt bản nộp.
+Bảng benchmark có nhãn đã được bổ sung tại mục 4. Khi chốt bản nộp, cần đối chiếu ảnh demo và mã commit được nhóm sử dụng; chạy lại đánh giá nếu muốn báo cáo tác động của bản sửa bằng chứng mới lên các chỉ số xếp hạng.
